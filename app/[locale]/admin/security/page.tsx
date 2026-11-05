@@ -1,4 +1,6 @@
+import { ArrowRight } from "lucide-react";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
+import { ICON } from "@/components/admin/icon";
 import { requireRole } from "@/lib/auth";
 import { BadWords, UnblockButton } from "@/components/admin/MessageControls";
 import { adminClient } from "@/lib/supabase/admin";
@@ -80,7 +82,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
           <ul className="mt-2 space-y-1 text-sm">
             {(roles as unknown as RoleChange[]).map((r, i) => (
               <li key={i}>
-                {when(r.created_at)} · <b>{r.detail.email}</b>: {r.detail.from ?? "—"} → {r.detail.to ?? "—"} <span className="text-muted">({r.actor_email ?? "system"})</span>
+                {when(r.created_at)} · <b>{r.detail.email}</b>: <span className="inline-flex items-center gap-1">{r.detail.from ?? "—"}<ArrowRight {...ICON} size={14} />{r.detail.to ?? "—"}</span> <span className="text-muted">({r.actor_email ?? "system"})</span>
               </li>
             ))}
           </ul>

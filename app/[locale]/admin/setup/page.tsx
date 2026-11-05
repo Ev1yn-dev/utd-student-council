@@ -1,4 +1,6 @@
+import { AlertTriangle, CircleCheck, CircleHelp, CircleX } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ICON } from "@/components/admin/icon";
 import { activeSharedAccounts } from "@/lib/admin/users";
 import { requireRole } from "@/lib/auth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/env";
@@ -6,7 +8,7 @@ import { ENV_VARS, envStatus, type EnvStatus } from "@/lib/env-spec";
 import { cn } from "@/lib/utils";
 
 type Status = EnvStatus | "unknown";
-const BADGE: Record<Status, string> = { set: "✅", test: "⚠️", missing: "❌", unknown: "❔" };
+const BADGE = { set: CircleCheck, test: AlertTriangle, missing: CircleX, unknown: CircleHelp } satisfies Record<Status, unknown>;
 const TONE: Record<Status, string> = {
   set: "bg-done/12 text-done", test: "bg-progress/15 text-progress", missing: "bg-danger/10 text-danger", unknown: "bg-surface-2 text-muted",
 };
@@ -41,7 +43,13 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
     <li key={name} className="rounded-[20px] border border-line bg-surface p-5 shadow-soft">
       <div className="flex flex-wrap items-center gap-2">
         <code className="rounded-lg bg-surface-2 px-2 py-0.5 font-mono text-sm font-semibold text-strong">{name}</code>
-        <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", TONE[status])}>{BADGE[status]} {t(`status.${status}`)}</span>
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold", TONE[status])}>
+          {(() => {
+            const B = BADGE[status];
+            return <B {...ICON} size={14} />;
+          })()}
+          {t(`status.${status}`)}
+        </span>
         {need && <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted">{t(`need.${need}`)}</span>}
         {pub !== undefined && <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted">{t(pub ? "exposure.public" : "exposure.secret")}</span>}
       </div>

@@ -1,4 +1,6 @@
+import { AlertTriangle, Calendar, Filter, Search } from "lucide-react";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
+import { ICON } from "@/components/admin/icon";
 import { MessageControls } from "@/components/admin/MessageControls";
 import { ErrorNote, PageHeader } from "@/components/admin/stats/ui";
 import { Link } from "@/i18n/navigation";
@@ -74,15 +76,15 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           </select>
         </label>
         <label className="text-xs text-muted">
-          {t("filters.q")}
+          <span className="flex items-center gap-2"><Search {...ICON} size={16} />{t("filters.q")}</span>
           <input name="q" type="search" defaultValue={sp.q ?? ""} placeholder={t("filters.qPlaceholder")} className={cn(field, "mt-1 text-ink")} />
         </label>
         <label className="text-xs text-muted">
-          {t("filters.from")}
+          <span className="flex items-center gap-2"><Calendar {...ICON} size={16} />{t("filters.from")}</span>
           <input name="from" type="date" defaultValue={sp.from ?? ""} className={cn(field, "mt-1 text-ink")} />
         </label>
         <label className="text-xs text-muted">
-          {t("filters.to")}
+          <span className="flex items-center gap-2"><Calendar {...ICON} size={16} />{t("filters.to")}</span>
           <input name="to" type="date" defaultValue={sp.to ?? ""} className={cn(field, "mt-1 text-ink")} />
         </label>
         <div className="flex flex-col justify-end gap-1.5 text-sm">
@@ -90,7 +92,10 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           <label className="flex items-center gap-2"><input type="checkbox" name="flagged" value="1" defaultChecked={fl.flagged} className="h-4 w-4" />{t("filters.flagged")}</label>
         </div>
         <div className="flex items-end gap-2">
-          <button type="submit" className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">{t("filters.apply")}</button>
+          <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">
+            <Filter {...ICON} />
+            {t("filters.apply")}
+          </button>
           <Link href="/admin/messages" className="rounded-full px-3 py-2 text-sm text-muted hover:text-ink">{t("filters.clear")}</Link>
         </div>
       </form>
@@ -117,7 +122,12 @@ export default async function MessagesPage({ params, searchParams }: { params: P
                   >
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                       {!m.read_at && <span className="rounded-full bg-pink px-2 py-0.5 font-semibold text-white">{t("new")}</span>}
-                      {m.flagged && <span className="rounded-full bg-danger px-2 py-0.5 font-semibold text-white">{t("flag")}</span>}
+                      {m.flagged && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-danger px-2 py-0.5 font-semibold text-white">
+                          <AlertTriangle {...ICON} size={14} />
+                          {t("flag")}
+                        </span>
+                      )}
                       <time dateTime={m.created_at}>{f.dateTime(new Date(m.created_at), { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" })}</time>
                       <span aria-hidden>·</span>
                       <span className="rounded-full bg-surface-2 px-2 py-0.5 text-ink">{topic(m.category)}</span>

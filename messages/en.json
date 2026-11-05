@@ -831,9 +831,9 @@
       "voice7": "Council voice, 7 days",
       "vsYesterday": "vs yesterday",
       "vsPrev": "vs previous 7 days",
-      "up": "Up {pct}%",
-      "down": "Down {pct}%",
-      "same": "No change",
+      "up": "Up +{pct}%",
+      "down": "Down −{pct}%",
+      "same": "No change ±0%",
       "fresh": "New (previous period was 0)",
       "goVisits": "See visits",
       "goVoice": "See council voice"

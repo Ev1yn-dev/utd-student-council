@@ -1,4 +1,5 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, ChartBar } from "@phosphor-icons/react/ssr";
+import { ChartColumn, Eye, Minus, Send, TrendingDown, TrendingUp, UserRound } from "lucide-react";
+import { ICON } from "@/components/admin/icon";
 import { Link } from "@/i18n/navigation";
 import { RANGES, type Range } from "@/lib/admin/stats";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ export function Card({ title, aside, children, className }: { title: string; asi
 export function Empty({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-2 px-4 py-10 text-center text-sm text-muted">
-      <ChartBar size={28} aria-hidden />
+      <ChartColumn {...ICON} size={28} />
       {text}
     </div>
   );
@@ -67,20 +68,26 @@ export function delta(now: number, prev: number, t: (k: string, v?: Record<strin
   return now > prev ? { kind: "up", text: t("up", { pct }) } : { kind: "down", text: t("down", { pct }) };
 }
 
-export function StatCard({ label, value, change, compare, href }: { label: string; value: string; change: Delta; compare: string; href: string }) {
-  const Icon = change.kind === "down" ? ArrowDownRight : change.kind === "same" ? ArrowRight : ArrowUpRight;
+const CARD_ICONS = { visits: Eye, uniques: UserRound, voice: Send };
+
+export function StatCard({ label, value, change, compare, href, icon }: { label: string; value: string; change: Delta; compare: string; href: string; icon: keyof typeof CARD_ICONS }) {
+  const Icon = change.kind === "down" ? TrendingDown : change.kind === "same" ? Minus : TrendingUp;
+  const CardIcon = CARD_ICONS[icon];
   return (
     <Link href={href} className="block rounded-[20px] border border-line bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
-      <p className="text-sm text-muted">{label}</p>
+      <p className="flex items-center gap-2 text-sm text-muted">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-brand-mid"><CardIcon {...ICON} /></span>
+        {label}
+      </p>
       <p className="mt-1 font-display text-3xl font-semibold tabular-nums text-strong">{value}</p>
       <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium",
+            "inline-flex items-center gap-2 rounded-full px-2 py-0.5 font-medium",
             change.kind === "up" || change.kind === "fresh" ? "bg-done/10 text-done" : change.kind === "down" ? "bg-danger/10 text-danger" : "bg-surface-2 text-muted",
           )}
         >
-          <Icon size={14} weight="bold" aria-hidden />
+          <Icon {...ICON} size={16} />
           {change.text}
         </span>
         <span className="text-muted">{compare}</span>

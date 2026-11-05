@@ -1,18 +1,19 @@
 "use client";
 
 import {
-  ArrowSquareOut, ChartLineUp, ChartPieSlice as Overview, ChatCircleText, DotsThreeOutline, EnvelopeSimple, GearSix, IdentificationCard, ShieldCheck, SignOut, SquaresFour, UsersThree, X,
-} from "@phosphor-icons/react/ssr";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+  Ellipsis, ExternalLink, IdCard, Inbox, LayoutDashboard, LayoutGrid, LineChart, LogOut, MessageSquareText, Settings, ShieldCheck, Users, X,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
 import { Link, usePathname } from "@/i18n/navigation";
+import { ICON } from "@/components/admin/icon";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
-  overview: Overview, visits: ChartLineUp, voice: ChatCircleText, messages: EnvelopeSimple, users: UsersThree, roster: IdentificationCard, setup: GearSix, security: ShieldCheck,
-  content: SquaresFour, site: ArrowSquareOut,
-} satisfies Record<string, PhosphorIcon>;
+  overview: LayoutDashboard, visits: LineChart, voice: MessageSquareText, messages: Inbox, users: Users, roster: IdCard, setup: Settings, security: ShieldCheck,
+  content: LayoutGrid, site: ExternalLink,
+} satisfies Record<string, LucideIcon>;
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number };
 type Labels = { nav: string; manage: string; more: string; close: string; signOut: string; signedInAs: string; title: string };
@@ -22,8 +23,8 @@ const isActive = (pathname: string, href: string) => (href === "/admin" ? pathna
 function SignOutForm({ label, className }: { label: string; className?: string }) {
   return (
     <form action="/auth/signout" method="post">
-      <button type="submit" className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm", className)}>
-        <SignOut size={18} aria-hidden />
+      <button type="submit" className={cn("flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm", className)}>
+        <LogOut {...ICON} />
         {label}
       </button>
     </form>
@@ -63,11 +64,11 @@ export function AdminNav({ primary, secondary, labels, email, role, newLabel }: 
           href={i.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+            "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors",
             active ? "bg-white/15 font-semibold text-white" : "text-on-brand/75 hover:bg-white/10 hover:text-white",
           )}
         >
-          <Icon size={18} weight={active ? "fill" : "regular"} aria-hidden />
+          <Icon {...ICON} strokeWidth={active ? 2.25 : 1.75} />
           <span className="flex-1">{i.label}</span>
           {!!i.badge && <Badge n={i.badge} label={newLabel} />}
         </Link>
@@ -115,7 +116,7 @@ export function AdminNav({ primary, secondary, labels, email, role, newLabel }: 
                   className={cn("flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[0.7rem]", active ? "font-semibold text-pink-ink" : "text-muted")}
                 >
                   <span className="relative">
-                    <Icon size={22} weight={active ? "fill" : "regular"} aria-hidden />
+                    <Icon {...ICON} size={20} strokeWidth={active ? 2.25 : 1.75} />
                     {!!i.badge && <Badge n={i.badge} label={newLabel} className="absolute -right-3 -top-1.5" />}
                   </span>
                   <span className="max-w-full truncate">{i.label}</span>
@@ -131,7 +132,7 @@ export function AdminNav({ primary, secondary, labels, email, role, newLabel }: 
               aria-controls="admin-more"
               className={cn("flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[0.7rem]", secondary.some((i) => isActive(pathname, i.href)) ? "font-semibold text-pink-ink" : "text-muted")}
             >
-              <DotsThreeOutline size={22} aria-hidden />
+              <Ellipsis {...ICON} size={20} />
               {labels.more}
             </button>
           </li>
@@ -143,8 +144,8 @@ export function AdminNav({ primary, secondary, labels, email, role, newLabel }: 
           <div id="admin-more" role="dialog" aria-modal="true" aria-label={labels.more} className="absolute inset-x-0 bottom-0 rounded-t-[24px] bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-lift">
             <div className="mb-2 flex items-center justify-between">
               <p className="font-display font-semibold text-strong">{labels.manage}</p>
-              <button type="button" onClick={() => setOpen(false)} aria-label={labels.close} className="rounded-full p-2 text-muted hover:bg-surface-2">
-                <X size={18} aria-hidden />
+              <button type="button" onClick={() => setOpen(false)} aria-label={labels.close} title={labels.close} className="rounded-full p-2 text-muted hover:bg-surface-2">
+                <X {...ICON} />
               </button>
             </div>
             <ul className="space-y-1">
@@ -153,8 +154,8 @@ export function AdminNav({ primary, secondary, labels, email, role, newLabel }: 
                 const active = isActive(pathname, i.href);
                 return (
                   <li key={i.href}>
-                    <Link href={i.href} aria-current={active ? "page" : undefined} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm", active ? "bg-surface-2 font-semibold text-strong" : "text-ink hover:bg-surface-2")}>
-                      <Icon size={20} aria-hidden />
+                    <Link href={i.href} aria-current={active ? "page" : undefined} className={cn("flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm", active ? "bg-surface-2 font-semibold text-strong" : "text-ink hover:bg-surface-2")}>
+                      <Icon {...ICON} />
                       {i.label}
                     </Link>
                   </li>

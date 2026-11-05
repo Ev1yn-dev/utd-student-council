@@ -1,4 +1,5 @@
-import { Trophy } from "@phosphor-icons/react/ssr";
+import { Trophy } from "lucide-react";
+import { ICON } from "@/components/admin/icon";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { StatChart } from "@/components/admin/stats/StatChart";
 import { BarList, Card, Empty, ErrorNote, PageHeader, RangeFilter } from "@/components/admin/stats/ui";
@@ -35,8 +36,8 @@ export default async function VoiceStatsPage({ params, searchParams }: { params:
       ) : (
         <>
           {leader && (
-            <p className="flex items-center gap-3 rounded-[20px] border border-pink/30 bg-pink-soft px-5 py-4 font-display text-lg font-semibold text-strong">
-              <Trophy size={24} weight="fill" className="shrink-0 text-pink-ink" aria-hidden />
+            <p className="flex items-center gap-2 rounded-[20px] border border-pink/30 bg-pink-soft px-5 py-4 font-display text-lg font-semibold text-strong">
+              <Trophy {...ICON} size={20} className="shrink-0 text-pink-ink" />
               {t("voice.top", { grade: gradeName(leader.grade), n: leader.n })}
             </p>
           )}
