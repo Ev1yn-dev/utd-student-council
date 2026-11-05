@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { ensureGate } from "@/lib/gate-client";
 
 /** Counts a page view with one small beacon (no cookies, no third party). The referrer goes with the first view only. */
 export function VisitBeacon() {
@@ -14,9 +15,13 @@ export function VisitBeacon() {
       body.r = document.referrer;
       first.current = false;
     }
-    try {
-      navigator.sendBeacon("/api/track", JSON.stringify(body));
-    } catch {}
+    // /api needs the gate cookie: send once it is in place
+    void ensureGate().then((ok) => {
+      if (!ok) return;
+      try {
+        navigator.sendBeacon("/api/track", JSON.stringify(body));
+      } catch {}
+    });
   }, [path]);
   return null;
 }

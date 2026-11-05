@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ensureGate } from "@/lib/gate-client";
 
 type Status = "received" | "reviewing" | "answered";
 type ErrKey = "notFound" | "tooMany" | "badCode" | "generic";
@@ -20,6 +21,7 @@ export function VoiceTracker() {
     setBusy(true);
     setRes(null);
     try {
+      await ensureGate(); // /api needs the gate cookie
       const t = await fetch("/api/token", { cache: "no-store" });
       if (!t.ok) throw new Error("token");
       const { token } = (await t.json()) as { token: string };
