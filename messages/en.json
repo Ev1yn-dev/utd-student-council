@@ -215,11 +215,14 @@
   "voice": {
     "title": "Voice to the Council",
     "sub": "Anonymous if you like · messages are never published automatically",
-    "privacy": "We keep only your message and reference code. Your IP address is stored as a hash, only to stop repeat submissions.",
+    "privacy": "We keep only your grade, your message and the reference code. Your IP address is stored as a hash, only to stop repeat submissions.",
     "formTitle": "Voice to the Council",
     "formSub": "Tell us about a problem or an idea — the council reads every message.",
     "category": "Category",
     "choose": "Choose a category",
+    "grade": "Grade",
+    "chooseGrade": "Choose your grade",
+    "gradeLabel": "M.{g}",
     "categories": {
       "learning": "Learning",
       "activities": "Activities",
@@ -258,7 +261,8 @@
       "long": "Message is too long (max 1,000 characters)",
       "captcha": "Verification failed, please try again",
       "notReady": "Messages can't be received yet — please contact the administrator",
-      "save": "Could not save, please try again later"
+      "save": "Could not save, please try again later",
+      "pickGrade": "Please choose your grade"
     }
   },
   "auth": {
@@ -792,5 +796,70 @@
     "addedBy": "added by {by}",
     "empty": "No users yet",
     "saved": "Saved"
+  },
+  "stats": {
+    "title": "Statistics",
+    "nav": {
+      "label": "Admin menu",
+      "overview": "Overview",
+      "visits": "Visits",
+      "voice": "Council voice",
+      "manage": "Administration",
+      "content": "Manage content",
+      "more": "More",
+      "close": "Close menu"
+    },
+    "range": {
+      "label": "Range",
+      "days": "{n} days"
+    },
+    "overview": {
+      "lead": "Site visits and council voice at a glance",
+      "today": "Visits today",
+      "views7": "Visits, 7 days",
+      "uniques7": "Unique visitors, 7 days",
+      "voice7": "Council voice, 7 days",
+      "vsYesterday": "vs yesterday",
+      "vsPrev": "vs previous 7 days",
+      "up": "Up {pct}%",
+      "down": "Down {pct}%",
+      "same": "No change",
+      "fresh": "New (previous period was 0)",
+      "goVisits": "See visits",
+      "goVoice": "See council voice"
+    },
+    "visits": {
+      "lead": "Counted without cookies and without storing IP addresses · kept for 90 days",
+      "trend": "Visits, last {n} days",
+      "views": "Visits",
+      "uniques": "Unique visitors",
+      "uniquesNote": "Unique visitors are counted per day, so a multi-day total is the sum of the days",
+      "pages": "Top pages",
+      "refs": "Referrers",
+      "direct": "Direct",
+      "devices": "Devices",
+      "mobile": "Mobile",
+      "desktop": "Desktop",
+      "countries": "Countries",
+      "unknown": "Unknown"
+    },
+    "voice": {
+      "lead": "Counts only: no names, messages or anything that identifies a sender",
+      "total": "{n} in total",
+      "byGrade": "Submissions by grade",
+      "top": "{grade} sent the most · {n}",
+      "trend": "Trend, last {n} days",
+      "byTopic": "By topic",
+      "ranking": "Grade ranking",
+      "rank": "Rank",
+      "grade": "Grade",
+      "count": "Count",
+      "share": "Share",
+      "noGrade": "Grade not given (sent before the field existed)",
+      "count_n": "{n}"
+    },
+    "empty": "No data for this period yet",
+    "error": "Could not load the data. Refresh the page to try again.",
+    "loading": "Loading"
   }
 }

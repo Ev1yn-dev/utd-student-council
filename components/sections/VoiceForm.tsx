@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { submitVoice, type VoiceState } from "@/app/actions/voice";
 import { Button } from "@/components/ui/Button";
-import { VOICE_CATEGORIES } from "@/lib/site";
+import { VOICE_CATEGORIES, VOICE_GRADES } from "@/lib/site";
 
 const INITIAL: VoiceState = { ok: false };
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -69,6 +69,15 @@ export function VoiceForm() {
           {Object.entries(VOICE_CATEGORIES).map(([value, key]) => <option key={value} value={value}>{t(`categories.${key}`)}</option>)}
         </select>
         <p id="category-err" className="text-sm text-danger">{err(state.fieldErrors?.category)}</p>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="grade" className="text-sm font-medium">{t("grade")}</label>
+        <select id="grade" name="grade" defaultValue="" className={input} aria-invalid={!!state.fieldErrors?.grade} aria-describedby="grade-err">
+          <option value="" disabled>{t("chooseGrade")}</option>
+          {VOICE_GRADES.map((g) => <option key={g} value={g}>{t("gradeLabel", { g })}</option>)}
+        </select>
+        <p id="grade-err" className="text-sm text-danger">{err(state.fieldErrors?.grade)}</p>
       </div>
 
       <div className="space-y-2">

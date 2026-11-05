@@ -9,6 +9,7 @@ import { VOICE_CATEGORY_VALUES } from "@/lib/site";
 
 const schema = z.object({
   category: z.enum(VOICE_CATEGORY_VALUES, { message: "pickCategory" }),
+  grade: z.coerce.number({ message: "pickGrade" }).int("pickGrade").min(1, "pickGrade").max(6, "pickGrade"),
   message: z.string().trim().min(10, "short").max(1000, "long"),
   anonymous: z.boolean(),
   website: z.string().max(0), // honeypot: real users leave it empty
@@ -20,7 +21,7 @@ export type VoiceState = {
   code?: string;
   error?: string;
   errorValues?: Record<string, number>;
-  fieldErrors?: Partial<Record<"category" | "message", string>>;
+  fieldErrors?: Partial<Record<"category" | "grade" | "message", string>>;
 };
 
 async function verifyTurnstile(token: string | null, ip: string) {
@@ -41,6 +42,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
 
   const parsed = schema.safeParse({
     category: fd.get("category"),
+    grade: fd.get("grade") || undefined,
     message: fd.get("message"),
     anonymous: fd.get("anonymous") === "on",
     website: fd.get("website") ?? "",
@@ -51,7 +53,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     const fieldErrors: VoiceState["fieldErrors"] = {};
     for (const i of parsed.error.issues) {
       const k = i.path[0];
-      if (k === "category" || k === "message") fieldErrors[k] ??= i.message;
+      if (k === "category" || k === "grade" || k === "message") fieldErrors[k] ??= i.message;
     }
     return { ok: false, fieldErrors };
   }
@@ -66,6 +68,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     await saveVoice({
       code,
       category: parsed.data.category,
+      grade: parsed.data.grade,
       message: parsed.data.message,
       anonymous: parsed.data.anonymous,
       ip_hash: hashIp(ip),

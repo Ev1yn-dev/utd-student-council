@@ -9,6 +9,7 @@ export type VoiceStatus = "received" | "reviewing" | "answered";
 export type VoiceRecord = {
   code: string;
   category: string;
+  grade: number; // 1–6 = ม.1–ม.6
   message: string;
   anonymous: boolean;
   ip_hash: string;
@@ -38,6 +39,7 @@ export async function saveVoice(rec: VoiceRecord) {
     const { error } = await adminClient().from("voice_messages").insert({
       ref_code: rec.code,
       category: rec.category,
+      grade: rec.grade,
       message: rec.message,
       anonymous: rec.anonymous,
       ip_hash: rec.ip_hash,

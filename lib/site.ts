@@ -21,4 +21,6 @@ export const VOICE_CATEGORIES = {
   อื่นๆ: "other",
 } as const;
 export type VoiceCategory = keyof typeof VOICE_CATEGORIES;
+/** Grade levels a sender picks on the voice form (ม.1–ม.6), stored as 1–6. */
+export const VOICE_GRADES = [1, 2, 3, 4, 5, 6] as const;
 export const VOICE_CATEGORY_VALUES = Object.keys(VOICE_CATEGORIES) as [VoiceCategory, ...VoiceCategory[]];

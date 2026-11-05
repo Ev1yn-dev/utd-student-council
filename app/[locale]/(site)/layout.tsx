@@ -2,6 +2,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ScrollTop } from "@/components/layout/ScrollTop";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { VisitBeacon } from "@/components/layout/VisitBeacon";
 import { schoolJsonLd } from "@/lib/school-info";
 import { SITE_URL } from "@/lib/site";
 
@@ -15,6 +16,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <main id="main" className="flex-1">{children}</main>
       <Footer />
       <ScrollTop />
+      <VisitBeacon />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld }} />
     </div>
   );

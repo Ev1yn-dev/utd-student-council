@@ -38,6 +38,14 @@ export function hashIp(ip: string) {
   return createHash("sha256").update(ip + secret()).digest("hex").slice(0, 32);
 }
 
+/**
+ * Keyed hash of IP + user agent for the visit counter. The database salts it again with a random salt that is deleted
+ * after the day, so the stored value cannot be traced back to an IP. The raw IP never leaves this process.
+ */
+export function visitorIdent(ip: string, ua: string) {
+  return createHmac("sha256", secret()).update(`visit|${ip}|${ua}`).digest("base64url");
+}
+
 /** Request must originate from our own pages (Origin or Referer host == Host). */
 export function isSameOrigin(req: Request) {
   const host = req.headers.get("host");

@@ -64,6 +64,18 @@ export function isCloudflareIp(ip: string) {
 type HeaderBag = { get(name: string): string | null };
 const first = (v: string | null) => v?.split(",")[0]?.trim() || null;
 
+/**
+ * Visitor country (ISO 3166 alpha-2) or null. Behind Cloudflare, Vercel geolocates the Cloudflare edge, so the
+ * Cloudflare header is used when the request really came through Cloudflare (same rule as clientIp).
+ */
+export function clientCountry(h: HeaderBag): string | null {
+  const host = (h.get("host") ?? "").toLowerCase().replace(/:\d+$/, "");
+  const peer = first(h.get("x-vercel-forwarded-for")) ?? first(h.get("x-forwarded-for")) ?? h.get("x-real-ip")?.trim() ?? null;
+  const viaCf = PROXIED_HOSTS.includes(host) && !!peer && isCloudflareIp(peer);
+  const c = ((viaCf ? h.get("cf-ipcountry") : h.get("x-vercel-ip-country")) ?? "").trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(c) && c !== "XX" && c !== "T1" ? c : null;
+}
+
 /** Real client IP, or "unknown" (never a Cloudflare edge address). */
 export function clientIp(h: HeaderBag): string {
   const host = (h.get("host") ?? "").toLowerCase().replace(/:\d+$/, "");
