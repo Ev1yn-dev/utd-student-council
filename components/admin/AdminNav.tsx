@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowSquareOut, ChartLineUp, ChartPieSlice as Overview, ChatCircleText, DotsThreeOutline, GearSix, IdentificationCard, ShieldCheck, SignOut, SquaresFour, UsersThree, X,
+  ArrowSquareOut, ChartLineUp, ChartPieSlice as Overview, ChatCircleText, DotsThreeOutline, EnvelopeSimple, GearSix, IdentificationCard, ShieldCheck, SignOut, SquaresFour, UsersThree, X,
 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -10,11 +10,11 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
-  overview: Overview, visits: ChartLineUp, voice: ChatCircleText, users: UsersThree, roster: IdentificationCard, setup: GearSix, security: ShieldCheck,
+  overview: Overview, visits: ChartLineUp, voice: ChatCircleText, messages: EnvelopeSimple, users: UsersThree, roster: IdentificationCard, setup: GearSix, security: ShieldCheck,
   content: SquaresFour, site: ArrowSquareOut,
 } satisfies Record<string, PhosphorIcon>;
 
-export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
+export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number };
 type Labels = { nav: string; manage: string; more: string; close: string; signOut: string; signedInAs: string; title: string };
 
 const isActive = (pathname: string, href: string) => (href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
@@ -30,8 +30,18 @@ function SignOutForm({ label, className }: { label: string; className?: string }
   );
 }
 
+/** Unread count, e.g. "3 ใหม่" for screen readers; capped at 99+ on screen. */
+function Badge({ n, label, className }: { n: number; label: string; className?: string }) {
+  return (
+    <span className={cn("min-w-5 rounded-full bg-pink px-1.5 text-center text-[0.65rem] font-semibold leading-5 text-white", className)}>
+      {n > 99 ? "99+" : n}
+      <span className="sr-only"> {label}</span>
+    </span>
+  );
+}
+
 /** Admin navigation: sidebar on desktop, bottom tab bar (+ "more" sheet) on phones. */
-export function AdminNav({ primary, secondary, labels, email, role }: { primary: NavItem[]; secondary: NavItem[]; labels: Labels; email: string; role: string }) {
+export function AdminNav({ primary, secondary, labels, email, role, newLabel }: { primary: NavItem[]; secondary: NavItem[]; labels: Labels; email: string; role: string; newLabel: string }) {
   const pathname = usePathname();
   // the sheet stays open only on the page it was opened on, so navigating closes it; Escape closes it too
   const [openOn, setOpenOn] = useState<string | null>(null);
@@ -58,7 +68,8 @@ export function AdminNav({ primary, secondary, labels, email, role }: { primary:
           )}
         >
           <Icon size={18} weight={active ? "fill" : "regular"} aria-hidden />
-          {i.label}
+          <span className="flex-1">{i.label}</span>
+          {!!i.badge && <Badge n={i.badge} label={newLabel} />}
         </Link>
       </li>
     );
@@ -66,12 +77,12 @@ export function AdminNav({ primary, secondary, labels, email, role }: { primary:
 
   return (
     <>
-      <aside className="hidden bg-gradient-to-b from-brand-deep to-[#0b1f4d] text-on-brand lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col">
+      <aside className="hidden bg-gradient-to-b from-brand-deep to-[#0b1f4d] text-on-brand lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:self-start lg:overflow-hidden">
         <div className="flex items-start justify-between gap-3 px-5 py-6">
           <Link href="/admin" className="font-display text-lg font-semibold leading-tight">{labels.title}</Link>
           <LocaleSwitch />
         </div>
-        <nav aria-label={labels.nav} className="flex-1 space-y-6 overflow-y-auto px-3">
+        <nav aria-label={labels.nav} className="no-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-3 pb-4">
           <ul className="space-y-1">{primary.map(sideLink)}</ul>
           <div>
             <p className="px-3 pb-2 text-xs font-medium text-on-brand/50">{labels.manage}</p>
@@ -92,7 +103,7 @@ export function AdminNav({ primary, secondary, labels, email, role }: { primary:
         <LocaleSwitch />
       </header>
       <nav aria-label={labels.nav} className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {primary.map((i) => {
             const Icon = ICONS[i.icon];
             const active = isActive(pathname, i.href);
@@ -103,8 +114,11 @@ export function AdminNav({ primary, secondary, labels, email, role }: { primary:
                   aria-current={active ? "page" : undefined}
                   className={cn("flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[0.7rem]", active ? "font-semibold text-pink-ink" : "text-muted")}
                 >
-                  <Icon size={22} weight={active ? "fill" : "regular"} aria-hidden />
-                  <span className="truncate">{i.label}</span>
+                  <span className="relative">
+                    <Icon size={22} weight={active ? "fill" : "regular"} aria-hidden />
+                    {!!i.badge && <Badge n={i.badge} label={newLabel} className="absolute -right-3 -top-1.5" />}
+                  </span>
+                  <span className="max-w-full truncate">{i.label}</span>
                 </Link>
               </li>
             );

@@ -3,10 +3,11 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { limit } from "@/lib/ratelimit";
-import { rosterOpen, studentGrade } from "@/lib/roster";
+import { rosterOpen, studentRecord } from "@/lib/roster";
 import { clientIp, hashIp, studentHash, voiceMessageHash } from "@/lib/security";
 import { VOICE_CATEGORY_VALUES } from "@/lib/site";
 import { adminClient } from "@/lib/supabase/admin";
+import { activeBlock, shouldFlag } from "@/lib/voice-admin";
 import { newCode, saveVoice, storeConfigured } from "@/lib/voice-store";
 
 const PER_STUDENT_PER_DAY = 3;
@@ -16,7 +17,7 @@ const schema = z.object({
   studentId: z.string().trim().regex(/^[0-9]{5}$/, "studentNotFound"),
   category: z.enum(VOICE_CATEGORY_VALUES, { message: "pickCategory" }),
   message: z.string().trim().min(10, "short").max(1000, "long"),
-  anonymous: z.boolean(),
+  ack: z.literal(true, { message: "ack" }), // "รับทราบ": the sender saw that the council sees who sent it
   website: z.string().max(0), // honeypot: real users leave it empty
 });
 
@@ -26,7 +27,7 @@ export type VoiceState = {
   code?: string;
   error?: string;
   errorValues?: Record<string, number>;
-  fieldErrors?: Partial<Record<"studentId" | "category" | "message", string>>;
+  fieldErrors?: Partial<Record<"studentId" | "category" | "message" | "ack", string>>;
 };
 
 async function verifyTurnstile(token: string | null, ip: string) {
@@ -55,7 +56,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     studentId: fd.get("studentId") ?? "",
     category: fd.get("category"),
     message: fd.get("message"),
-    anonymous: fd.get("anonymous") === "on",
+    ack: fd.get("ack") === "on",
     website: fd.get("website") ?? "",
   });
   if (!parsed.success) {
@@ -64,7 +65,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     const fieldErrors: VoiceState["fieldErrors"] = {};
     for (const i of parsed.error.issues) {
       const k = i.path[0];
-      if (k === "studentId" || k === "category" || k === "message") fieldErrors[k] ??= i.message;
+      if (k === "studentId" || k === "category" || k === "message" || k === "ack") fieldErrors[k] ??= i.message;
     }
     return { ok: false, fieldErrors };
   }
@@ -74,11 +75,12 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
   }
   if (!(await voiceOpen())) return { ok: false, error: "closed" };
 
-  const { studentId, category, message, anonymous } = parsed.data;
+  const { studentId, category, message } = parsed.data;
   try {
-    // the grade comes from the roster, never from the form
-    const grade = await studentGrade(studentId);
-    if (!grade) return { ok: false, fieldErrors: { studentId: "studentNotFound" } };
+    // grade, room and name come from the roster, never from the form
+    const student = await studentRecord(studentId);
+    if (!student) return { ok: false, fieldErrors: { studentId: "studentNotFound" } };
+    if (await activeBlock(studentId)) return { ok: false, error: "blocked" };
 
     const { data: claim, error } = await adminClient().rpc("voice_claim", {
       p_student_hash: studentHash(studentId),
@@ -93,11 +95,13 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     await saveVoice({
       code,
       category,
-      grade,
-      // the raw ID is kept only when the student chose to be named; an anonymous message has no link to a student
-      student_id: anonymous ? null : studentId,
+      // every message is linked to its sender: ID + a snapshot of the roster entry at send time (admins only)
+      student_id: studentId,
+      grade: student.grade,
+      sender: { prefix: student.prefix, first_name: student.first_name, last_name: student.last_name, room: student.room },
+      flagged: await shouldFlag(message),
       message,
-      anonymous,
+      anonymous: false,
       ip_hash: hashIp(ip),
       status: "received",
       reply: null,

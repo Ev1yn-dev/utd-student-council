@@ -65,3 +65,7 @@ next-env.d.ts
 supabase/.temp/
 # internal working notes (kept locally; not published)
 /NOTES.md
+
+# student rosters (names and IDs of minors): never commit
+*.csv
+roster*.json

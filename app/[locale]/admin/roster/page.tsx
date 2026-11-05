@@ -2,7 +2,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { RosterImport } from "@/components/admin/RosterImport";
 import { Card, ErrorNote, PageHeader } from "@/components/admin/stats/ui";
 import { requireRole } from "@/lib/auth";
-import { rosterSummary } from "@/lib/roster";
+import { currentAcademicYear, rosterSummary } from "@/lib/roster";
 
 /** Admin only: student roster for the voice form. Counts per grade, never a list of IDs. */
 export default async function RosterPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -29,7 +29,10 @@ export default async function RosterPage({ params }: { params: Promise<{ locale:
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-sm text-muted">{t("total", { n: f.number(sum.total) })}</p>
+              <p className="mt-3 text-sm text-muted">
+                {t("total", { n: f.number(sum.total) })}
+                {sum.year ? ` · ${t("yearShown", { year: String(sum.year) })}` : ""}
+              </p>
             </>
           ) : (
             <p className="rounded-xl bg-gold-soft px-4 py-3 text-sm text-ink">{t("empty")}</p>
@@ -37,7 +40,7 @@ export default async function RosterPage({ params }: { params: Promise<{ locale:
         </Card>
       )}
       <Card title={t("importTitle")}>
-        <RosterImport />
+        <RosterImport year={sum?.year ?? currentAcademicYear()} />
       </Card>
     </div>
   );

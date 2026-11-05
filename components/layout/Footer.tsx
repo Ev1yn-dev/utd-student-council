@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Icon } from "@/components/icons/Icon";
 import { Link } from "@/i18n/navigation";
 import { SCHOOL_INFO } from "@/lib/school-info";
@@ -10,8 +10,15 @@ import { SCHOOL_INFO } from "@/lib/school-info";
  * phones), links, copyright and a small creator credit. Every image has fixed dimensions (no layout shift).
  * Wording: messages footer.school; numbers: lib/school-info.ts.
  */
+// deploy date, fixed at build time (next.config.ts env.BUILD_DATE)
+const BUILT = process.env.BUILD_DATE;
+/** "5 พ.ย. 2569" (Thai, Buddhist era) or "5 Nov 2026", in Bangkok time. */
+const builtOn = (iso: string, locale: string) =>
+  new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(new Date(iso));
+
 export function Footer() {
   const t = useTranslations();
+  const locale = useLocale();
   const affiliations = t.raw("footer.school.affiliations") as string[];
   return (
     <footer className="relative mt-14 overflow-hidden bg-gradient-to-br from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand">
@@ -62,7 +69,7 @@ export function Footer() {
           <p className="text-xs">{t("footer.copyright", { school: t("site.school") })}</p>
           {/* creator credit: small capsule linking to the creator's site (new tab); on hover/focus it lifts 1px and an
               external-link arrow slides in (no motion with reduced motion); focus ring comes from the global :focus-visible */}
-          <a href="https://natsemi.online" target="_blank" rel="noopener noreferrer" aria-label="Lunelle's website (opens in a new tab)" className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 py-1 pl-1 pr-3 text-[0.72rem] text-on-brand/75 no-underline transition duration-150 motion-reduce:transition-none motion-safe:hover:-translate-y-px motion-safe:focus-visible:-translate-y-px hover:border-pink-400/60 hover:text-on-brand focus-visible:border-pink-400/60 focus-visible:text-on-brand">
+          <a href="https://ev1yn-bio.vercel.app" target="_blank" rel="noopener noreferrer" aria-label={t("footer.school.creditAria")} className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 py-1 pl-1 pr-3 text-[0.72rem] text-on-brand/75 no-underline transition duration-150 motion-reduce:transition-none motion-safe:hover:-translate-y-px motion-safe:focus-visible:-translate-y-px hover:border-pink-400/60 hover:text-on-brand focus-visible:border-pink-400/60 focus-visible:text-on-brand">
             <picture className="shrink-0">
               <source type="image/avif" srcSet="/credits/lunelle-96.avif 1x, /credits/lunelle-192.avif 2x" />
               <img src="/credits/lunelle-96.webp" srcSet="/credits/lunelle-96.webp 1x, /credits/lunelle-192.webp 2x" alt={t("footer.school.creditAlt")} width={24} height={24} className="h-6 w-6 rounded-full bg-white object-cover transition duration-300 motion-safe:group-hover:rotate-6" loading="lazy" decoding="async" />
@@ -72,6 +79,7 @@ export function Footer() {
               <Icon name="external" size={14} />
             </span>
           </a>
+          {BUILT && <p className="text-[0.7rem] text-on-brand/50">{t("footer.updated", { date: builtOn(BUILT, locale) })}</p>}
         </div>
         {/* honeypot: invisible to people, followed by scrapers -> proxy.ts bans the IP for 1h (disallowed in robots.txt) */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- must stay a plain link (no prefetch): proxy.ts bans whoever follows it */}

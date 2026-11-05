@@ -114,10 +114,6 @@ export function VoiceForm() {
         <p id="message-err" className="text-sm text-danger">{err(state.fieldErrors?.message)}</p>
       </div>
 
-      <label className="flex items-center gap-3">
-        <input type="checkbox" name="anonymous" defaultChecked className="h-5 w-5 accent-[var(--c-pink)]" />
-        <span>{t("anonymous")}</span>
-      </label>
 
       {/* honeypot — hidden from people, bots fill it */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
@@ -125,6 +121,16 @@ export function VoiceForm() {
       </div>
 
       {SITE_KEY && <div className="cf-turnstile" data-sitekey={SITE_KEY} data-theme="light" />}
+
+      {/* identified submissions: shown before sending, and must be acknowledged */}
+      <div className="space-y-3 rounded-md border border-gold/50 bg-gold-soft px-4 py-3">
+        <p id="voice-notice" className="text-sm text-ink">{t("notice")}</p>
+        <label className="flex items-center gap-3">
+          <input type="checkbox" name="ack" required aria-describedby="voice-notice ack-err" aria-invalid={!!state.fieldErrors?.ack} className="h-5 w-5 accent-[var(--c-pink)]" />
+          <span className="font-medium">{t("ack")}</span>
+        </label>
+        <p id="ack-err" className="text-sm text-danger">{err(state.fieldErrors?.ack)}</p>
+      </div>
 
       {state.error && <p role="alert" className="rounded-md bg-pink-soft px-4 py-3 text-ink">{err(state.error, state.errorValues)}</p>}
 

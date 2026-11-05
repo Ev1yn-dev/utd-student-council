@@ -4,7 +4,9 @@ import { adminClient } from "@/lib/supabase/admin";
 // Student roster (migration 0015): the voice form only accepts an active student ID from it, and takes the grade from
 // it. Service role only. Nothing here returns a list of IDs.
 
-export const STUDENT_ID = /^[0-9]{5}$/;
+import { STUDENT_ID, type RosterRow } from "@/lib/roster-csv";
+
+export { parseRosterCsv, type RosterRow } from "@/lib/roster-csv";
 const usingSupabase = () => !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 let openCache: { open: boolean; exp: number } | null = null;
@@ -22,12 +24,24 @@ export async function rosterOpen(): Promise<boolean> {
   return openCache.open;
 }
 
-/** Grade (1–6) of an active student, or null when the ID is unknown or inactive. */
-export async function studentGrade(studentId: string): Promise<number | null> {
+export type Student = { grade: number; room: string | null; prefix: string | null; first_name: string | null; last_name: string | null };
+
+/** An active student's grade, room and name (snapshot for a submission), or null when unknown or inactive. */
+export async function studentRecord(studentId: string): Promise<Student | null> {
   if (!STUDENT_ID.test(studentId) || !usingSupabase()) return null;
-  const { data, error } = await adminClient().from("student_roster").select("grade").eq("student_id", studentId).eq("active", true).maybeSingle();
+  const { data, error } = await adminClient()
+    .from("student_roster")
+    .select("grade,room,prefix,first_name,last_name")
+    .eq("student_id", studentId)
+    .eq("active", true)
+    .maybeSingle();
   if (error) throw new Error(`roster lookup failed: ${error.message}`);
-  return data ? Number(data.grade) : null;
+  return data ? { grade: Number(data.grade), room: data.room ?? null, prefix: data.prefix ?? null, first_name: data.first_name ?? null, last_name: data.last_name ?? null } : null;
+}
+
+/** Thai academic year now (starts in May): 2569 for May 2026 – April 2027. */
+export function currentAcademicYear(now = new Date()) {
+  return now.getFullYear() + 543 - (now.getMonth() < 4 ? 1 : 0);
 }
 
 /** Active students per grade (counts only) and the last import time, for the admin page. */
@@ -40,45 +54,18 @@ export async function rosterSummary() {
       return { grade: g, n: count ?? 0 };
     }),
   );
-  const { data } = await db.from("student_roster").select("updated_at").order("updated_at", { ascending: false }).limit(1).maybeSingle();
-  return { grades, total: grades.reduce((a, g) => a + g.n, 0), updatedAt: (data?.updated_at as string | undefined) ?? null };
-}
-
-export type RosterRow = { student_id: string; grade: number; active: boolean };
-
-/**
- * Parses a roster CSV: student_id, grade[, active]. A header row is skipped. The grade may be written 4, ม.4, ม4,
- * M.4 or with a room (ม.4/2). Separators: comma, semicolon or tab. Returns the rows or the bad line numbers.
- */
-export function parseRosterCsv(text: string): { rows: RosterRow[]; bad: number[]; dupes: number[] } {
-  const rows: RosterRow[] = [];
-  const bad: number[] = [];
-  const dupes: number[] = [];
-  const seen = new Set<string>();
-  text.replace(/^﻿/, "").split(/\r?\n/).forEach((line, i) => {
-    if (!line.trim()) return;
-    const cells = line.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "").trim());
-    const id = cells[0] ?? "";
-    if (i === 0 && !/^[0-9]/.test(id)) return; // header
-    const grade = Number((cells[1] ?? "").replace(/^(ม\.?|m\.?)\s*/i, "").match(/^[1-6]/)?.[0]);
-    const act = (cells[2] ?? "").toLowerCase();
-    if (!STUDENT_ID.test(id) || !grade) {
-      bad.push(i + 1);
-      return;
-    }
-    if (seen.has(id)) {
-      dupes.push(i + 1);
-      return;
-    }
-    seen.add(id);
-    rows.push({ student_id: id, grade, active: !["0", "false", "no", "n", "ไม่", "inactive", "ลาออก", "จบ"].includes(act) });
-  });
-  return { rows, bad, dupes };
+  const { data } = await db.from("student_roster").select("updated_at,academic_year").order("updated_at", { ascending: false }).limit(1).maybeSingle();
+  return {
+    grades,
+    total: grades.reduce((a, g) => a + g.n, 0),
+    updatedAt: (data?.updated_at as string | undefined) ?? null,
+    year: (data?.academic_year as number | null | undefined) ?? null,
+  };
 }
 
 /** Replaces the roster: upserts every row, marks students missing from the file inactive. */
-export async function importRoster(rows: RosterRow[]) {
-  const { data, error } = await adminClient().rpc("roster_import", { p_rows: rows });
+export async function importRoster(rows: RosterRow[], year: number) {
+  const { data, error } = await adminClient().rpc("roster_import", { p_rows: rows, p_year: year });
   if (error) throw new Error(`roster import failed: ${error.message}`);
   openCache = null;
   const r = (Array.isArray(data) ? data[0] : data) as { upserted: number; deactivated: number } | null;

@@ -1,6 +1,8 @@
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { requireRole } from "@/lib/auth";
+import { BadWords, UnblockButton } from "@/components/admin/MessageControls";
 import { adminClient } from "@/lib/supabase/admin";
+import { badWords, listBlocks } from "@/lib/voice-admin";
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 864e5).toISOString();
 
@@ -19,6 +21,12 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
   const [{ data: ev }, { data: roles }] = await Promise.all([
     db.from("security_events" as never).select("kind,path,ip_hash,created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(500),
     db.from("audit_logs").select("actor_email,detail,created_at").eq("action", "role.change").gte("created_at", since).order("created_at", { ascending: false }).limit(50),
+  ]);
+  const [ti, tv, blocks, words] = await Promise.all([
+    getTranslations("inbox"),
+    getTranslations("voice"),
+    listBlocks().catch((e: Error) => (console.error("[admin] blocks", e.message), [])),
+    badWords(true).catch(() => [] as string[]),
   ]);
   const events = (ev ?? []) as unknown as Event[];
   const counts = Object.entries(events.reduce<Record<string, number>>((m, e) => ((m[e.kind] = (m[e.kind] ?? 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
@@ -88,6 +96,38 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
           <input type="hidden" name="scope" value="global" />
           <button type="submit" className="rounded-full bg-danger px-4 py-2 text-sm font-semibold text-white">{t("logoutAll")}</button>
         </form>
+      </section>
+      <section className="rounded-2xl border border-line bg-surface p-5">
+        <h2 className="font-semibold">{ti("blocks.title")}</h2>
+        {blocks.length ? (
+          <ul className="mt-3 divide-y divide-line">
+            {blocks.map((b) => {
+              const p = b.person;
+              const who = p ? [p.prefix, p.first_name, p.last_name].filter(Boolean).join(" ") : ti("blocks.unknown");
+              const cls = p ? `${tv("gradeLabel", { g: Number(p.grade) })}${p.room ? `/${p.room}` : ""}` : "";
+              return (
+                <li key={b.id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
+                  <div className="space-y-0.5">
+                    <p className="font-medium">{who} <span className="font-normal text-muted">{cls} · <span className="font-mono">{b.student_id}</span></span></p>
+                    <p><span className="text-muted">{ti("blocks.reason")}:</span> {b.reason}</p>
+                    <p className="text-xs text-muted">
+                      {b.until ? ti("blocks.until", { date: when(b.until) }) : ti("blocks.forever")} · {ti("blocks.by", { email: b.created_by })} · {when(b.created_at)}
+                    </p>
+                  </div>
+                  <UnblockButton id={b.id} />
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted">{ti("blocks.none")}</p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-line bg-surface p-5">
+        <h2 className="font-semibold">{ti("words.title")}</h2>
+        <p className="mb-3 mt-1 text-sm text-muted">{ti("words.lead")}</p>
+        <BadWords words={words} />
       </section>
     </div>
   );

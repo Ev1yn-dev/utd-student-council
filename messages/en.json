@@ -3,7 +3,7 @@
     "title": "Uttaradit School Student Council",
     "description": "Uttaradit School Student Council — activities and news, policies, council members and teacher advisors",
     "voiceTitle": "Voice to the Council",
-    "voiceDescription": "Send an idea or a complaint to the student council, anonymously if you like, and track it with a reference code",
+    "voiceDescription": "Send an idea or a complaint to the student council, never published, and track it with a reference code",
     "loginTitle": "Sign in",
     "pendingTitle": "Waiting for access",
     "policyNotFound": "Policy not found"
@@ -204,8 +204,10 @@
       ],
       "logoAlt": "Uttaradit School Student Council emblem",
       "creditAlt": "Profile picture of Lunelle, the site's developer",
-      "credit": "Powered by Lunelle · PPLX TEAM · Founder"
-    }
+      "credit": "Lunelle · Co-Founder LMD TEAM",
+      "creditAria": "Lunelle · Co-Founder LMD TEAM (opens in a new tab)"
+    },
+    "updated": "Last updated {date} · To correct information, contact the public relations room, Building 1"
   },
   "notFound": {
     "title": "Page not found",
@@ -214,8 +216,8 @@
   },
   "voice": {
     "title": "Voice to the Council",
-    "sub": "Anonymous if you like · messages are never published automatically",
-    "privacy": "Your student ID is only used to check that you are a student. If you tick “Anonymous” the message is not linked to your ID; otherwise only administrators can see your student ID.",
+    "sub": "Not shown to the public · messages are never published automatically",
+    "privacy": "Your message is not shown to the public, but the student council sees the sender's name, grade, room and student ID to prevent inappropriate messages. This information stays within the student council.",
     "formTitle": "Voice to the Council",
     "formSub": "Tell us about a problem or an idea — the council reads every message.",
     "studentId": "Student ID",
@@ -232,7 +234,8 @@
     },
     "message": "Message",
     "placeholder": "Type your message here…",
-    "anonymous": "Stay anonymous",
+    "notice": "This message is not shown to the public, but the student council will see the sender's name, grade, room and student ID to prevent inappropriate messages.",
+    "ack": "I understand",
     "honeypot": "Website",
     "submit": "Send",
     "sending": "Sending…",
@@ -265,7 +268,9 @@
       "studentNotFound": "This student ID was not found. Check it again or contact the student council.",
       "studentLimit": "This student ID has already sent {max} messages today. You can send again tomorrow.",
       "duplicate": "This message has already been sent.",
-      "closed": "Not open yet"
+      "closed": "Not open yet",
+      "ack": "Please tick “I understand” before sending",
+      "blocked": "This account is temporarily blocked from sending messages. Contact the student council."
     },
     "closed": "Not open yet",
     "closedSub": "The student council is getting the system ready. Please come back later."
@@ -875,7 +880,7 @@
     "total": "{n} in total",
     "updated": "Last updated {when}",
     "importTitle": "Import from CSV",
-    "format": "Columns: student ID (5 digits), grade (1–6 or ม.1–ม.6), status (optional, 0 = inactive). The first row may be a header.",
+    "format": "Columns: student_id, grade, room, prefix, first_name, last_name (with a header row), or the short form ID, grade, status",
     "replaceNote": "An import replaces the roster: IDs missing from the file are set inactive.",
     "file": "CSV file",
     "submit": "Import",
@@ -888,7 +893,83 @@
       "bad": "Invalid data on line {lines}",
       "dupes": "Duplicate ID on line {lines}",
       "forbidden": "You are not allowed to do this",
-      "failed": "The import failed. Try again."
+      "failed": "The import failed. Try again.",
+      "year": "Invalid academic year"
+    },
+    "year": "Academic year",
+    "yearShown": "Academic year {year}"
+  },
+  "inbox": {
+    "nav": "Messages",
+    "title": "Messages to the council",
+    "lead": "Every message from the council voice form, newest first · views, blocks and deletions are logged",
+    "filters": {
+      "label": "Filters",
+      "grade": "Grade",
+      "room": "Room",
+      "topic": "Topic",
+      "from": "From",
+      "to": "To",
+      "q": "Search",
+      "qPlaceholder": "Name, ID or message",
+      "unread": "Unread only",
+      "flagged": "To review only",
+      "all": "All",
+      "apply": "Filter",
+      "clear": "Clear filters"
+    },
+    "count": "{n} messages",
+    "empty": "No messages match these filters",
+    "time": "Date and time",
+    "topic": "Topic",
+    "message": "Message",
+    "name": "Name",
+    "class": "Grade/room",
+    "id": "Student ID",
+    "ref": "Reference",
+    "anonymousOld": "Anonymous (sent before the change)",
+    "new": "New",
+    "flag": "To review",
+    "markRead": "Mark read",
+    "markUnread": "Mark unread",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete",
+    "cancel": "Cancel",
+    "block": "Block sender",
+    "blockReason": "Reason",
+    "blockUntil": "Until (optional)",
+    "blockSubmit": "Confirm block",
+    "blockedOk": "Sender blocked",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {pages}",
+    "errors": {
+      "forbidden": "You are not allowed to do this",
+      "invalid": "Invalid data",
+      "reason": "Enter a reason",
+      "until": "The end date must be today or later",
+      "noSender": "This message has no sender ID (sent before the change)",
+      "empty": "Enter at least one word",
+      "failed": "That did not work. Try again.",
+      "load": "Could not load the messages"
+    },
+    "blocks": {
+      "title": "Blocked senders",
+      "none": "No blocked senders",
+      "until": "until {date}",
+      "forever": "no end date",
+      "by": "by {email}",
+      "unblock": "Unblock",
+      "reason": "Reason",
+      "unknown": "Not in the current roster"
+    },
+    "words": {
+      "title": "Words to review",
+      "lead": "Messages containing these words are highlighted as “to review” but still delivered",
+      "add": "Add words",
+      "placeholder": "One word per line, or separated by commas",
+      "none": "No words yet",
+      "remove": "Remove word {word}"
     }
   }
 }

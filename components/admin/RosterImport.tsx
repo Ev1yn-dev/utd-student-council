@@ -6,13 +6,17 @@ import { importRosterAction, type RosterState } from "@/app/actions/roster";
 
 const INITIAL: RosterState = { ok: false };
 
-export function RosterImport() {
+export function RosterImport({ year }: { year: number }) {
   const t = useTranslations("roster");
   const [state, action, pending] = useActionState(importRosterAction, INITIAL);
   return (
     <form action={action} className="space-y-4">
       <p className="text-sm text-muted">{t("format")}</p>
       <p className="rounded-xl bg-gold-soft px-4 py-2.5 text-sm text-ink">{t("replaceNote")}</p>
+      <div className="space-y-2">
+        <label htmlFor="roster-year" className="text-sm font-medium">{t("year")}</label>
+        <input id="roster-year" name="year" type="number" min={2560} max={2700} defaultValue={year} required className="block w-32 rounded-xl border border-line bg-surface px-3 py-2 text-sm" />
+      </div>
       <div className="space-y-2">
         <label htmlFor="roster-file" className="text-sm font-medium">{t("file")}</label>
         <input

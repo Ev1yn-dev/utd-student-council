@@ -16,14 +16,16 @@ export async function importRosterAction(_prev: RosterState, fd: FormData): Prom
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "noFile" };
   if (file.size > MAX_BYTES) return { ok: false, error: "tooBig" };
+  const year = Number(fd.get("year"));
+  if (!Number.isInteger(year) || year < 2560 || year > 2700) return { ok: false, error: "year" };
 
   const { rows, bad, dupes } = parseRosterCsv(await file.text());
   if (bad.length) return { ok: false, error: "bad", values: { lines: lines(bad) } };
   if (dupes.length) return { ok: false, error: "dupes", values: { lines: lines(dupes) } };
   if (!rows.length) return { ok: false, error: "empty" };
   try {
-    const r = await importRoster(rows);
-    await audit(s, "roster.import", "student_roster", undefined, { rows: rows.length, deactivated: r.deactivated });
+    const r = await importRoster(rows, year);
+    await audit(s, "roster.import", "student_roster", undefined, { rows: rows.length, deactivated: r.deactivated, year });
     return { ok: true, done: { n: r.upserted, off: r.deactivated } };
   } catch (e) {
     console.error("[roster]", (e as Error).message);

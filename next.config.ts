@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
   // ISR pages: Cache-Control s-maxage = revalidate (600 s), stale-while-revalidate up to 1 day
   expireTime: 86400,
   poweredByHeader: false,
+  // build/deploy date for the footer's "last updated" line (inlined at build time)
+  env: { BUILD_DATE: new Date().toISOString() },
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   async redirects() {

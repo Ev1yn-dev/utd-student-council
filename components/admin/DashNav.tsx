@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function DashNav({ items, label }: { items: { href: string; label: string }[]; label: string }) {
   const pathname = usePathname();
   return (
-    <nav aria-label={label} className="no-scrollbar flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:pb-4">
+    <nav aria-label={label} className="no-scrollbar flex gap-1 overflow-x-auto px-3 pb-3 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overscroll-contain lg:pb-4">
       {items.map((i) => {
         const active = i.href === "/dashboard" ? pathname === i.href : pathname.startsWith(i.href);
         return (

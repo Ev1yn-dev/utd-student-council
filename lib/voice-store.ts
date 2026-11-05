@@ -10,7 +10,9 @@ export type VoiceRecord = {
   code: string;
   category: string;
   grade: number; // 1–6 = ม.1–ม.6, from the student roster
-  student_id: string | null; // only when the sender is not anonymous
+  student_id: string; // the sender (admins only); old anonymous messages have none
+  sender: { prefix: string | null; first_name: string | null; last_name: string | null; room: string | null }; // roster snapshot
+  flagged: boolean; // matched the admin's word list ("ต้องตรวจ"), still delivered
   message: string;
   anonymous: boolean;
   ip_hash: string;
@@ -42,6 +44,11 @@ export async function saveVoice(rec: VoiceRecord) {
       category: rec.category,
       grade: rec.grade,
       student_id: rec.student_id,
+      sender_prefix: rec.sender.prefix,
+      sender_first_name: rec.sender.first_name,
+      sender_last_name: rec.sender.last_name,
+      sender_room: rec.sender.room,
+      flagged: rec.flagged,
       message: rec.message,
       anonymous: rec.anonymous,
       ip_hash: rec.ip_hash,
