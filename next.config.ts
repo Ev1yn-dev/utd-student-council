@@ -42,12 +42,16 @@ const nextConfig: NextConfig = {
     ]);
   },
   async headers() {
-    // public pages: also tell downstream CDNs (Cloudflare) they may keep them 10 min and serve stale for a day
+    // public pages: Vercel's CDN may keep them 10 min (it sits behind proxy.ts, so the gate still runs). Cloudflare
+    // sits in FRONT of the proxy: it must never cache pages or files, or it would serve them past the gate.
     const cdn = [
       { key: "CDN-Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
-      { key: "Cloudflare-CDN-Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
+      { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
-    const files = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }];
+    const files = [
+      { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+      { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
+    ];
     return [
       { source: "/:path*", headers: securityHeaders },
       ...["/:locale(th|en)", "/:locale(th|en)/voice", "/:locale(th|en)/policies/:slug", "/:locale(th|en)/home/:year/:tab"].map((source) => ({ source, headers: cdn })),

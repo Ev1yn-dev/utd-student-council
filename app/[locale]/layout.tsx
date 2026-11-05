@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { DECOY_TEXT } from "@/lib/browser-gate";
+import { BrowserCheck } from "@/components/layout/BrowserCheck";
+import { DECOY_TEXT } from "@/lib/decoy-text";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { IBM_Plex_Sans_Thai, Kanit, Noto_Serif_Thai } from "next/font/google";
@@ -48,6 +49,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
       </head>
       <body className="min-h-dvh">
         <LocaleProvider initial={locale} messages={{ th, en }}>{children}</LocaleProvider>
+        <BrowserCheck />
       </body>
     </html>
   );

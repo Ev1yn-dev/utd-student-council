@@ -1,7 +1,7 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
-import { GATE_COOKIE, decoyHtml, gate, issueGateCookie } from "@/lib/browser-gate";
+import { GATE_COOKIE, botClass, decoyBody, gate, pathKind } from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { clientIp } from "@/lib/client-ip";
 import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
@@ -58,20 +58,19 @@ const COMMON = [
 ];
 const publicCsp = () => `${PUBLIC_CSP}; ${COMMON.join("; ")}`;
 
-/** Page requests (GET/HEAD of a page, not /api, /auth, files or Next assets) go through the browser gate. */
-const isPageGet = (req: NextRequest) => (req.method === "GET" || req.method === "HEAD") && !NOT_PAGE.test(req.nextUrl.pathname) && !req.nextUrl.pathname.startsWith("/_next/");
-
-/** The anti-code-fetching decoy (lib/browser-gate.ts): 403, never cached anywhere. */
-function decoy() {
-  return new NextResponse(decoyHtml(), {
+/** The anti-code-fetching answer (lib/browser-gate.ts): 403 with the message, never cached anywhere. */
+function decoy(req: NextRequest) {
+  const { body, type } = decoyBody(req.headers.get("accept"));
+  return new NextResponse(body, {
     status: 403,
     headers: {
-      "content-type": "text/html; charset=utf-8",
+      "content-type": type,
       "cache-control": "no-store",
       "cdn-cache-control": "no-store",
       "cloudflare-cdn-cache-control": "no-store",
       "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
       "x-robots-tag": "noindex, nofollow",
+      vary: "*",
     },
   });
 }
@@ -99,17 +98,29 @@ function hostRule(req: NextRequest): NextResponse | "secondary" | null {
 export async function proxy(req: NextRequest) {
   const host = hostRule(req);
   if (host instanceof NextResponse) return host;
-  // anti-code-fetching gate (pages only): real browsers, search engines and link previews pass, everything else
-  // gets the decoy. Runs before any network call, so a browser gets its page at once.
-  const page = isPageGet(req);
-  const g = page ? gate(req.headers, req.cookies.get(GATE_COOKIE)?.value) : "pass";
-  if (g === "decoy") return decoy();
-  const res = await handle(req, host);
-  if (g === "pass+cookie" && !res.headers.has("location")) {
-    const c = issueGateCookie();
-    if (c) res.cookies.set(c.name, c.value, { httpOnly: true, secure: !isDev, sameSite: "lax", path: "/", maxAge: c.maxAge });
+  const { pathname } = req.nextUrl;
+  const ip = clientIp(req.headers);
+  // scanner paths first (they also look like files): ban + refuse
+  if (TRAP_PATHS.test(pathname)) {
+    await ban(ip);
+    void logSecurity("trap", { ip, path: pathname });
+    return decoy(req);
   }
-  return res;
+
+  // anti-code-fetching gate on every request. Search engines must pass a reverse + forward DNS check
+  // (cached per IP); link-preview bots and health checks are recognised by User-Agent.
+  const ua = req.headers.get("user-agent") ?? "";
+  const bot = botClass(ua);
+  const botOk = bot === "ua" || (bot === "dns" && (isDev || (await verifySearchBot(ip, ua)) === true));
+  if (gate(req.headers, req.method, pathname, req.cookies.get(GATE_COOKIE)?.value, botOk) === "decoy") return decoy(req);
+
+  // files: nothing else to do; Cloudflare must not cache them, or it would hand them to anyone without the gate
+  if (pathKind(pathname) === "asset") {
+    const res = NextResponse.next();
+    res.headers.set("cloudflare-cdn-cache-control", "no-store");
+    return res;
+  }
+  return handle(req, host);
 }
 
 async function handle(req: NextRequest, host: "secondary" | null): Promise<NextResponse> {
@@ -119,12 +130,7 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
   const ip = clientIp(req.headers);
   const dynamic = DYNAMIC.test(pathname);
 
-  // 1) honeypot / scanner paths -> temp ban (these are never public pages)
-  if (TRAP_PATHS.test(pathname)) {
-    await ban(ip);
-    void logSecurity("trap", { ip, path: pathname });
-    return deny(403, "Forbidden");
-  }
+  // 1) honeypot / scanner paths: handled in proxy() before the gate
 
   // 2) user agent policy (no network calls)
   if (!ua.trim()) {
@@ -215,13 +221,7 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
 }
 
 export const config = {
-  matcher: [
-    {
-      source: "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
-  ],
+  // every request goes through the gate (including /_next/static, /_next/image and prefetches); only the files crawlers
+  // need before anything else are left out
+  matcher: ["/((?!favicon.ico|robots.txt|sitemap.xml).*)"],
 };

@@ -16,8 +16,8 @@ export const isAiCrawler = (ua: string) => AI_RE.test(ua);
 export const isBlockedTool = (ua: string) => BLOCKED_TOOLS.test(ua);
 
 const SEARCH_BOTS: Array<{ ua: RegExp; domains: string[] }> = [
-  { ua: /googlebot/i, domains: [".googlebot.com", ".google.com"] },
-  { ua: /bingbot/i, domains: [".search.msn.com"] },
+  { ua: /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google/i, domains: [".googlebot.com", ".google.com", ".googleusercontent.com"] },
+  { ua: /bingbot|bingpreview|msnbot|adidxbot/i, domains: [".search.msn.com"] },
 ];
 
 const cache = new Map<string, { ok: boolean; exp: number }>();
