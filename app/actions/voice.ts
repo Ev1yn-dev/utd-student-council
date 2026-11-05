@@ -3,13 +3,18 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { limit } from "@/lib/ratelimit";
-import { clientIp, hashIp } from "@/lib/security";
-import { newCode, saveVoice, storeConfigured } from "@/lib/voice-store";
+import { rosterOpen, studentGrade } from "@/lib/roster";
+import { clientIp, hashIp, studentHash, voiceMessageHash } from "@/lib/security";
 import { VOICE_CATEGORY_VALUES } from "@/lib/site";
+import { adminClient } from "@/lib/supabase/admin";
+import { newCode, saveVoice, storeConfigured } from "@/lib/voice-store";
+
+const PER_STUDENT_PER_DAY = 3;
 
 const schema = z.object({
+  // wrong format and unknown ID give the same message (nothing tells whether an ID exists)
+  studentId: z.string().trim().regex(/^[0-9]{5}$/, "studentNotFound"),
   category: z.enum(VOICE_CATEGORY_VALUES, { message: "pickCategory" }),
-  grade: z.coerce.number({ message: "pickGrade" }).int("pickGrade").min(1, "pickGrade").max(6, "pickGrade"),
   message: z.string().trim().min(10, "short").max(1000, "long"),
   anonymous: z.boolean(),
   website: z.string().max(0), // honeypot: real users leave it empty
@@ -21,7 +26,7 @@ export type VoiceState = {
   code?: string;
   error?: string;
   errorValues?: Record<string, number>;
-  fieldErrors?: Partial<Record<"category" | "grade" | "message", string>>;
+  fieldErrors?: Partial<Record<"studentId" | "category" | "message", string>>;
 };
 
 async function verifyTurnstile(token: string | null, ip: string) {
@@ -30,8 +35,14 @@ async function verifyTurnstile(token: string | null, ip: string) {
   if (!token) return false;
   const body = new URLSearchParams({ secret: secretKey, response: token, remoteip: ip });
   const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body, cache: "no-store" });
-  const j = (await r.json()) as { success?: boolean };
+  const j = (await r.json()) as { success?: boolean; "error-codes"?: string[] };
+  if (!j.success) console.warn("[voice] turnstile rejected", j["error-codes"]?.join(",") ?? "");
   return j.success === true;
+}
+
+/** Whether the form accepts submissions (a student roster has been imported). */
+export async function voiceOpen(): Promise<boolean> {
+  return storeConfigured() && (await rosterOpen());
 }
 
 export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<VoiceState> {
@@ -41,8 +52,8 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
   if (!rl.ok) return { ok: false, error: "rate", errorValues: { min: Math.ceil(rl.retryAfter / 60) } };
 
   const parsed = schema.safeParse({
+    studentId: fd.get("studentId") ?? "",
     category: fd.get("category"),
-    grade: fd.get("grade") || undefined,
     message: fd.get("message"),
     anonymous: fd.get("anonymous") === "on",
     website: fd.get("website") ?? "",
@@ -53,7 +64,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     const fieldErrors: VoiceState["fieldErrors"] = {};
     for (const i of parsed.error.issues) {
       const k = i.path[0];
-      if (k === "category" || k === "grade" || k === "message") fieldErrors[k] ??= i.message;
+      if (k === "studentId" || k === "category" || k === "message") fieldErrors[k] ??= i.message;
     }
     return { ok: false, fieldErrors };
   }
@@ -61,25 +72,41 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
   if (!(await verifyTurnstile(fd.get("cf-turnstile-response") as string | null, ip))) {
     return { ok: false, error: "captcha" };
   }
-  if (!storeConfigured()) return { ok: false, error: "notReady" };
+  if (!(await voiceOpen())) return { ok: false, error: "closed" };
 
-  const code = newCode();
+  const { studentId, category, message, anonymous } = parsed.data;
   try {
+    // the grade comes from the roster, never from the form
+    const grade = await studentGrade(studentId);
+    if (!grade) return { ok: false, fieldErrors: { studentId: "studentNotFound" } };
+
+    const { data: claim, error } = await adminClient().rpc("voice_claim", {
+      p_student_hash: studentHash(studentId),
+      p_msg_hash: voiceMessageHash(studentId, message),
+      p_max: PER_STUDENT_PER_DAY,
+    });
+    if (error) throw new Error(`voice_claim: ${error.message}`);
+    if (claim === "limit") return { ok: false, error: "studentLimit", errorValues: { max: PER_STUDENT_PER_DAY } };
+    if (claim === "dup") return { ok: false, error: "duplicate" };
+
+    const code = newCode();
     await saveVoice({
       code,
-      category: parsed.data.category,
-      grade: parsed.data.grade,
-      message: parsed.data.message,
-      anonymous: parsed.data.anonymous,
+      category,
+      grade,
+      // the raw ID is kept only when the student chose to be named; an anonymous message has no link to a student
+      student_id: anonymous ? null : studentId,
+      message,
+      anonymous,
       ip_hash: hashIp(ip),
       status: "received",
       reply: null,
       public: false,
       created_at: new Date().toISOString(),
     });
+    return { ok: true, code };
   } catch (e) {
     console.error("[voice] save failed", e);
     return { ok: false, error: "save" };
   }
-  return { ok: true, code };
 }

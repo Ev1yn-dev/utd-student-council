@@ -46,6 +46,16 @@ export function visitorIdent(ip: string, ua: string) {
   return createHmac("sha256", secret()).update(`visit|${ip}|${ua}`).digest("base64url");
 }
 
+/** HMAC of a student ID (server secret): the per-day limit key. Never stored next to a message. */
+export function studentHash(studentId: string) {
+  return createHmac("sha256", secret()).update(`student|${studentId}`).digest("base64url");
+}
+
+/** HMAC of student ID + message text, for the duplicate check. */
+export function voiceMessageHash(studentId: string, message: string) {
+  return createHmac("sha256", secret()).update(`voice|${studentId}|${message.replace(/\s+/g, " ").trim().toLowerCase()}`).digest("base64url");
+}
+
 /** Request must originate from our own pages (Origin or Referer host == Host). */
 export function isSameOrigin(req: Request) {
   const host = req.headers.get("host");

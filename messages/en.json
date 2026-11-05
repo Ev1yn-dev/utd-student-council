@@ -215,13 +215,13 @@
   "voice": {
     "title": "Voice to the Council",
     "sub": "Anonymous if you like · messages are never published automatically",
-    "privacy": "We keep only your grade, your message and the reference code. Your IP address is stored as a hash, only to stop repeat submissions.",
+    "privacy": "Your student ID is only used to check that you are a student. If you tick “Anonymous” the message is not linked to your ID; otherwise only administrators can see your student ID.",
     "formTitle": "Voice to the Council",
     "formSub": "Tell us about a problem or an idea — the council reads every message.",
+    "studentId": "Student ID",
+    "studentIdHint": "Your 5-digit student number, e.g. 12345",
     "category": "Category",
     "choose": "Choose a category",
-    "grade": "Grade",
-    "chooseGrade": "Choose your grade",
     "gradeLabel": "M.{g}",
     "categories": {
       "learning": "Learning",
@@ -262,8 +262,13 @@
       "captcha": "Verification failed, please try again",
       "notReady": "Messages can't be received yet — please contact the administrator",
       "save": "Could not save, please try again later",
-      "pickGrade": "Please choose your grade"
-    }
+      "studentNotFound": "This student ID was not found. Check it again or contact the student council.",
+      "studentLimit": "This student ID has already sent {max} messages today. You can send again tomorrow.",
+      "duplicate": "This message has already been sent.",
+      "closed": "Not open yet"
+    },
+    "closed": "Not open yet",
+    "closedSub": "The student council is getting the system ready. Please come back later."
   },
   "auth": {
     "back": "Back to home",
@@ -861,5 +866,29 @@
     "empty": "No data for this period yet",
     "error": "Could not load the data. Refresh the page to try again.",
     "loading": "Loading"
+  },
+  "roster": {
+    "nav": "Student roster",
+    "lead": "Import the roster from a CSV file so the council voice form can check student IDs. This page shows counts only.",
+    "empty": "No roster yet. The council voice form shows “Not open yet” until one is imported.",
+    "summary": "Active students",
+    "total": "{n} in total",
+    "updated": "Last updated {when}",
+    "importTitle": "Import from CSV",
+    "format": "Columns: student ID (5 digits), grade (1–6 or ม.1–ม.6), status (optional, 0 = inactive). The first row may be a header.",
+    "replaceNote": "An import replaces the roster: IDs missing from the file are set inactive.",
+    "file": "CSV file",
+    "submit": "Import",
+    "importing": "Importing…",
+    "done": "Imported {n} rows · set {off} inactive",
+    "errors": {
+      "noFile": "Choose a CSV file",
+      "tooBig": "The file is too large (900 KB max)",
+      "empty": "No students found in the file",
+      "bad": "Invalid data on line {lines}",
+      "dupes": "Duplicate ID on line {lines}",
+      "forbidden": "You are not allowed to do this",
+      "failed": "The import failed. Try again."
+    }
   }
 }

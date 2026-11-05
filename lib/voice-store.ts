@@ -9,7 +9,8 @@ export type VoiceStatus = "received" | "reviewing" | "answered";
 export type VoiceRecord = {
   code: string;
   category: string;
-  grade: number; // 1–6 = ม.1–ม.6
+  grade: number; // 1–6 = ม.1–ม.6, from the student roster
+  student_id: string | null; // only when the sender is not anonymous
   message: string;
   anonymous: boolean;
   ip_hash: string;
@@ -40,6 +41,7 @@ export async function saveVoice(rec: VoiceRecord) {
       ref_code: rec.code,
       category: rec.category,
       grade: rec.grade,
+      student_id: rec.student_id,
       message: rec.message,
       anonymous: rec.anonymous,
       ip_hash: rec.ip_hash,

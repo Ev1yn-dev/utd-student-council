@@ -192,7 +192,7 @@ test("setup page: admin only, statuses without values", async ({ browser }) => {
 test("voice: public form submits and the code can be tracked", async ({ page }) => {
   await page.goto("/th/voice");
   await page.locator('[name="category"]').selectOption({ index: 1 });
-  await page.locator('[name="grade"]').selectOption({ index: 1 });
+  await page.locator('[name="studentId"]').fill(process.env.E2E_STUDENT_ID ?? "00000");
   await page.locator('[name="message"]').fill("ข้อความทดสอบจากระบบอัตโนมัติ E2E กรุณาไม่ต้องตอบกลับ");
   await page.waitForTimeout(3000); // the Turnstile test key solves itself
   await page.getByRole("button", { name: "ส่งความคิดเห็น" }).click();

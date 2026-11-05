@@ -14,8 +14,8 @@ export default async function AdminLayout({ children, params }: { children: Reac
   const { locale } = await params;
   setRequestLocale(locale);
   const s = await requireRole(["admin"]);
-  const [t, td, ts, tu, tsec] = await Promise.all([
-    getTranslations("stats"), getTranslations("dashboard"), getTranslations("setup"), getTranslations("users"), getTranslations("security"),
+  const [t, td, ts, tu, tsec, tr] = await Promise.all([
+    getTranslations("stats"), getTranslations("dashboard"), getTranslations("setup"), getTranslations("users"), getTranslations("security"), getTranslations("roster"),
   ]);
   const primary: NavItem[] = [
     { href: "/admin", label: t("nav.overview"), icon: "overview" },
@@ -24,6 +24,7 @@ export default async function AdminLayout({ children, params }: { children: Reac
   ];
   const secondary: NavItem[] = [
     { href: "/dashboard", label: t("nav.content"), icon: "content" },
+    { href: "/admin/roster", label: tr("nav"), icon: "roster" },
     { href: "/admin/users", label: tu("nav"), icon: "users" },
     { href: "/admin/setup", label: ts("nav"), icon: "setup" },
     { href: "/admin/security", label: tsec("nav"), icon: "security" },

@@ -3,10 +3,10 @@
 import Script from "next/script";
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useActionState } from "react";
-import { submitVoice, type VoiceState } from "@/app/actions/voice";
+import { useActionState, useEffect, useState } from "react";
+import { submitVoice, voiceOpen, type VoiceState } from "@/app/actions/voice";
 import { Button } from "@/components/ui/Button";
-import { VOICE_CATEGORIES, VOICE_GRADES } from "@/lib/site";
+import { VOICE_CATEGORIES } from "@/lib/site";
 
 const INITIAL: VoiceState = { ok: false };
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -41,6 +41,15 @@ export function VoiceForm() {
   const te = useTranslations("voice.errors");
   const err = (k?: string, v?: Record<string, number>) => (k ? te(k, v) : undefined);
   const [state, action, pending] = useActionState(submitVoice, INITIAL);
+  // the page is static: ask the server once whether a student roster is in place (null = still asking)
+  const [open, setOpen] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    voiceOpen().then((v) => alive && setOpen(v), () => alive && setOpen(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   if (state.ok) {
     return (
@@ -49,6 +58,15 @@ export function VoiceForm() {
         <h3 className="text-2xl font-semibold">{t("done")}</h3>
         <p className="text-muted">{t("keep")}</p>
         <p className="font-display text-3xl font-semibold tracking-wider text-pink-ink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
+      </div>
+    );
+  }
+
+  if (open === false || state.error === "closed") {
+    return (
+      <div className="space-y-2 rounded-lg border border-line bg-page p-10 text-center" role="status">
+        <h3 className="text-2xl font-semibold">{t("closed")}</h3>
+        <p className="text-muted">{t("closedSub")}</p>
       </div>
     );
   }
@@ -63,21 +81,31 @@ export function VoiceForm() {
       </div>
 
       <div className="space-y-2">
+        <label htmlFor="studentId" className="text-sm font-medium">{t("studentId")}</label>
+        <input
+          id="studentId"
+          name="studentId"
+          inputMode="numeric"
+          autoComplete="off"
+          pattern="[0-9]{5}"
+          maxLength={5}
+          required
+          placeholder="12345"
+          className={input}
+          aria-invalid={!!state.fieldErrors?.studentId}
+          aria-describedby="studentId-hint studentId-err"
+        />
+        <p id="studentId-hint" className="text-sm text-muted">{t("studentIdHint")}</p>
+        <p id="studentId-err" className="text-sm text-danger">{err(state.fieldErrors?.studentId)}</p>
+      </div>
+
+      <div className="space-y-2">
         <label htmlFor="category" className="text-sm font-medium">{t("category")}</label>
         <select id="category" name="category" defaultValue="" className={input} aria-invalid={!!state.fieldErrors?.category} aria-describedby="category-err">
           <option value="" disabled>{t("choose")}</option>
           {Object.entries(VOICE_CATEGORIES).map(([value, key]) => <option key={value} value={value}>{t(`categories.${key}`)}</option>)}
         </select>
         <p id="category-err" className="text-sm text-danger">{err(state.fieldErrors?.category)}</p>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="grade" className="text-sm font-medium">{t("grade")}</label>
-        <select id="grade" name="grade" defaultValue="" className={input} aria-invalid={!!state.fieldErrors?.grade} aria-describedby="grade-err">
-          <option value="" disabled>{t("chooseGrade")}</option>
-          {VOICE_GRADES.map((g) => <option key={g} value={g}>{t("gradeLabel", { g })}</option>)}
-        </select>
-        <p id="grade-err" className="text-sm text-danger">{err(state.fieldErrors?.grade)}</p>
       </div>
 
       <div className="space-y-2">

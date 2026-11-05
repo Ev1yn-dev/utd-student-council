@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowSquareOut, ChartLineUp, ChartPieSlice as Overview, ChatCircleText, DotsThreeOutline, GearSix, ShieldCheck, SignOut, SquaresFour, UsersThree, X,
+  ArrowSquareOut, ChartLineUp, ChartPieSlice as Overview, ChatCircleText, DotsThreeOutline, GearSix, IdentificationCard, ShieldCheck, SignOut, SquaresFour, UsersThree, X,
 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
-  overview: Overview, visits: ChartLineUp, voice: ChatCircleText, users: UsersThree, setup: GearSix, security: ShieldCheck,
+  overview: Overview, visits: ChartLineUp, voice: ChatCircleText, users: UsersThree, roster: IdentificationCard, setup: GearSix, security: ShieldCheck,
   content: SquaresFour, site: ArrowSquareOut,
 } satisfies Record<string, PhosphorIcon>;
 

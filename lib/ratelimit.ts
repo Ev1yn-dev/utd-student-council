@@ -6,7 +6,7 @@ export type Bucket = "page" | "api" | "form" | "login" | "upload" | "authStart" 
 const RULES: Record<Bucket, { max: number; windowSec: number }> = {
   page: { max: 60, windowSec: 60 }, // 60 req/min
   api: { max: 20, windowSec: 60 }, // 20 req/min
-  form: { max: 3, windowSec: 600 }, // 3 per 10 min (/voice)
+  form: { max: 10, windowSec: 3600 }, // 10 per hour per IP (/voice); plus 3 per student ID per day (voice_claim)
   login: { max: 5, windowSec: 900 }, // 5 per 15 min (password-style login forms; not used by the Google flow)
   // Google sign-in, per real client IP (lib/client-ip.ts), sliding window, own key prefix (utd:authStart / utd:authCallback)
   authStart: { max: 20, windowSec: 600 }, // GET /auth/google: 20 / 10 min

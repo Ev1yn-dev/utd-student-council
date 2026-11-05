@@ -1,6 +1,7 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
+import { GATE_COOKIE, decoyHtml, gate, issueGateCookie } from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { clientIp } from "@/lib/client-ip";
 import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
@@ -57,6 +58,24 @@ const COMMON = [
 ];
 const publicCsp = () => `${PUBLIC_CSP}; ${COMMON.join("; ")}`;
 
+/** Page requests (GET/HEAD of a page, not /api, /auth, files or Next assets) go through the browser gate. */
+const isPageGet = (req: NextRequest) => (req.method === "GET" || req.method === "HEAD") && !NOT_PAGE.test(req.nextUrl.pathname) && !req.nextUrl.pathname.startsWith("/_next/");
+
+/** The anti-code-fetching decoy (lib/browser-gate.ts): 403, never cached anywhere. */
+function decoy() {
+  return new NextResponse(decoyHtml(), {
+    status: 403,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "cdn-cache-control": "no-store",
+      "cloudflare-cdn-cache-control": "no-store",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "x-robots-tag": "noindex, nofollow",
+    },
+  });
+}
+
 function deny(status: number, body: string, extra?: Record<string, string>) {
   return new NextResponse(body, { status, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", ...extra } });
 }
@@ -78,9 +97,23 @@ function hostRule(req: NextRequest): NextResponse | "secondary" | null {
 }
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
   const host = hostRule(req);
   if (host instanceof NextResponse) return host;
+  // anti-code-fetching gate (pages only): real browsers, search engines and link previews pass, everything else
+  // gets the decoy. Runs before any network call, so a browser gets its page at once.
+  const page = isPageGet(req);
+  const g = page ? gate(req.headers, req.cookies.get(GATE_COOKIE)?.value) : "pass";
+  if (g === "decoy") return decoy();
+  const res = await handle(req, host);
+  if (g === "pass+cookie" && !res.headers.has("location")) {
+    const c = issueGateCookie();
+    if (c) res.cookies.set(c.name, c.value, { httpOnly: true, secure: !isDev, sameSite: "lax", path: "/", maxAge: c.maxAge });
+  }
+  return res;
+}
+
+async function handle(req: NextRequest, host: "secondary" | null): Promise<NextResponse> {
+  const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent") ?? "";
   // real visitor IP (Cloudflare sits in front of Vercel on utdsc.com) — see lib/client-ip.ts
   const ip = clientIp(req.headers);
