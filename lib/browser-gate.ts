@@ -24,7 +24,7 @@ export const GATE_TTL_SEC = 12 * 3600;
 const PREVIEW_BOTS =
   /facebookexternalhit|facebot|meta-externalfetcher|twitterbot|discordbot|linkedinbot|slackbot|telegrambot|whatsapp|line-poker|linespider|\bline\/|skypeuripreview|pinterestbot/i;
 /** Search engines checked by reverse + forward DNS in lib/bots.ts (verifySearchBot). */
-export const DNS_VERIFIED_BOTS = /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google|bingbot|bingpreview|msnbot|adidxbot|applebot(?!-extended)|duckduckbot/i;
+export const DNS_VERIFIED_BOTS = /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google|chrome-lighthouse|bingbot|bingpreview|msnbot|adidxbot|applebot(?!-extended)|duckduckbot/i;
 /** Platform health checks / screenshots. */
 const HEALTH = /cloudflare-(healthchecks|traffic-manager|diagnostics)|vercel-(screenshot|favicon)|vercelbot/i;
 

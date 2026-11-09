@@ -19,10 +19,11 @@ export const isBlockedTool = (ua: string) => BLOCKED_TOOLS.test(ua);
 /**
  * Search engines, verified by reverse DNS + forward-confirm (the host must end in one of `domains` and resolve back
  * to the same IP), or — DuckDuckBot, which publishes no reverse-DNS names — by DuckDuckGo's published IP list.
+ * PageSpeed Insights (Chrome-Lighthouse) is checked like Googlebot: only runs from Google's own hosts pass.
  * Keep the UA patterns in sync with DNS_VERIFIED_BOTS in lib/browser-gate.ts.
  */
 const SEARCH_BOTS: Array<{ name: string; ua: RegExp; domains?: string[]; ipList?: string }> = [
-  { name: "google", ua: /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google/i, domains: [".googlebot.com", ".google.com", ".googleusercontent.com"] },
+  { name: "google", ua: /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google|chrome-lighthouse/i, domains: [".googlebot.com", ".google.com", ".googleusercontent.com"] },
   { name: "bing", ua: /bingbot|bingpreview|msnbot|adidxbot/i, domains: [".search.msn.com"] },
   { name: "apple", ua: /applebot(?!-extended)/i, domains: [".applebot.apple.com"] },
   { name: "duckduckgo", ua: /duckduckbot/i, ipList: "https://duckduckgo.com/duckduckbot.json" },
