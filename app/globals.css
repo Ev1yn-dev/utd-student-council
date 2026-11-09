@@ -139,6 +139,13 @@ h1, h2, h3, h4 {
 
 /* Logos / graphics only — text stays selectable (accessibility). */
 .no-select { user-select: none; -webkit-user-drag: none; }
+/* hero Ken Burns drift on the current slide (components/sections/HeroSlides.tsx sets the duration) */
+@keyframes ken-burns { from { transform: scale(1); } to { transform: scale(1.08); } }
+.ken-burns { animation: ken-burns 7200ms linear forwards; }
+/* header emblems (components/layout/Navbar.tsx): springy pop-in, start state only while the animation runs */
+@keyframes logo-pop { 0% { transform: scale(.3) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.08) rotate(3deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.logo-pop { animation: logo-pop 600ms cubic-bezier(.34,1.56,.64,1) both; }
+@media (prefers-reduced-motion: reduce) { .ken-burns, .logo-pop { animation: none; } }
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -253,3 +260,20 @@ h1, h2, h3, h4 {
 .utd-rdp .rdp-chevron { fill: var(--c-brand-mid); }
 .utd-rdp .rdp-dropdown_root { border-radius: 10px; }
 .utd-rdp :focus-visible { outline: 3px solid var(--c-pink); outline-offset: 2px; }
+
+/* anti-code-fetching, browser side (lib/protect-client.ts adds the classes after load; admins / PROTECTION_MODE=off: never) */
+html.protect body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.protect :is(input, textarea, select, [contenteditable=""], [contenteditable="true"], [data-allow-copy]) { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+html.protect a[href] { -webkit-touch-callout: default; }
+html.protect-wall body > :not(#utd-protect-wall) { display: none !important; }
+#utd-protect-wall {
+  position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px;
+  background: #0b1f4d; color: #f5f7ff; text-align: center; font: 600 1.25rem/1.7 var(--font-plex), system-ui, sans-serif;
+}
+@media print {
+  html.protect body > * { display: none !important; }
+  html.protect body::before {
+    content: "โปรดติดต่อสภานักเรียนนะค้าบ เราทำเว็บนี้โดยกันการดึงโค้ด เพื่อไม่ให้ใครใช้ลิขสิทธิ์ของเราไป";
+    display: block; padding: 48px 24px; text-align: center; font: 600 18pt/1.7 var(--font-plex), sans-serif; color: #000;
+  }
+}

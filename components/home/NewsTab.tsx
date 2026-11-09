@@ -1,14 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import dynamic from "next/dynamic";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { Activity, Announcement, Img, L } from "@/lib/content";
 import { EmptyState } from "@/components/home/EmptyState";
 import { CardItem, DateChip, Lift, Prose, TextCard, ZoneTitle } from "@/components/home/parts";
 import { ThBadge, Tx, useL } from "@/components/i18n/LocaleProvider";
-import { Gallery } from "@/components/ui/Gallery";
-import { Modal } from "@/components/ui/Modal";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { IconExternal, IconImages, IconLink, IconMegaphone, IconPin, IconStar } from "@/components/icons/Icon";
 
@@ -26,6 +25,10 @@ function Body({ v }: { v: L<string[]> }) {
     </div>
   );
 }
+
+// popups load on first open
+const Modal = dynamic(() => import("@/components/ui/Modal").then((r) => r.Modal));
+const Gallery = dynamic(() => import("@/components/ui/Gallery").then((r) => r.Gallery));
 
 export function NewsTab({ announcements, activities, query, onClear }: {
   announcements: Announcement[]; activities: Activity[]; query: string; onClear: () => void;
@@ -67,7 +70,7 @@ export function NewsTab({ announcements, activities, query, onClear }: {
               {activities.map((a, i) => (
                 <CardItem key={a.id} index={i} className={a.photos.length ? "col-span-full" : undefined}>
                   <Lift>
-                    <motion.article layoutId={`act-${a.id}`} style={{ borderRadius: 20 }} className={CARD}>
+                    <m.article layoutId={`act-${a.id}`} style={{ borderRadius: 20 }} className={CARD}>
                       <button type="button" onClick={() => setActId(a.id)} aria-haspopup="dialog" className="block h-full w-full text-left">
                         {a.photos.length ? (
                           <WideMedia
@@ -86,7 +89,7 @@ export function NewsTab({ announcements, activities, query, onClear }: {
                           />
                         )}
                       </button>
-                    </motion.article>
+                    </m.article>
                   </Lift>
                 </CardItem>
               ))}
@@ -142,7 +145,7 @@ function AnnouncementCard({ a, onOpen }: { a: Announcement; onOpen: () => void }
   );
   return (
     <Lift>
-      <motion.article layoutId={`ann-${a.id}`} style={{ borderRadius: 20 }} className={CARD}>
+      <m.article layoutId={`ann-${a.id}`} style={{ borderRadius: 20 }} className={CARD}>
         <button type="button" onClick={onOpen} className="flex h-full w-full flex-col text-left" aria-haspopup="dialog">
           {a.cover ? (
             <>
@@ -173,7 +176,7 @@ function AnnouncementCard({ a, onOpen }: { a: Announcement; onOpen: () => void }
             />
           )}
         </button>
-      </motion.article>
+      </m.article>
     </Lift>
   );
 }
@@ -197,9 +200,9 @@ export function WideMedia({
   const image = (
     <div className="relative aspect-[16/9] w-full overflow-hidden sm:aspect-[16/6] lg:aspect-[16/5]">
       <AnimatePresence initial={false}>
-        <motion.div key={k} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}>
+        <m.div key={k} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}>
           <SmartImage img={photos[k]} alt={alt} sizes="(max-width: 1320px) 100vw, 1320px" className="h-full w-full" imgClassName="group-hover:scale-105" />
-        </motion.div>
+        </m.div>
       </AnimatePresence>
       {badge && <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-brand-deep/70 px-3 py-1 text-xs font-medium text-white backdrop-blur">{badge}</span>}
     </div>

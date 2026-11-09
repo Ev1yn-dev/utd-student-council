@@ -29,5 +29,6 @@ export async function POST(req: NextRequest) {
   // Set-Cookie with one name per path: the old per-path cookies are cleared one response header each
   res.headers.append("set-cookie", serialize(rlBypassCookie("", 0)));
   for (const path of RL_BYPASS_OLD_PATHS) res.headers.append("set-cookie", serialize(rlBypassCookie("", 0, path)));
+  res.headers.append("set-cookie", `utd_np=; Path=/; Max-Age=0; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
   return res;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -83,7 +83,7 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6">
-      <motion.div
+      <m.div
         aria-hidden
         className="absolute inset-0 bg-brand-deep/55 backdrop-blur-md"
         initial={{ opacity: 0 }}
@@ -92,7 +92,7 @@ export function Modal({
         transition={{ duration: 0.3 }}
         onClick={onClose}
       />
-      <motion.div
+      <m.div
         ref={panel}
         role="dialog"
         aria-modal="true"
@@ -108,7 +108,7 @@ export function Modal({
           widths[size],
         )}
       >
-        <motion.header
+        <m.header
           layout="position"
           className="flex shrink-0 items-center gap-3 bg-gradient-to-r from-brand-deep via-brand to-brand-mid px-5 py-4 text-on-brand sm:px-6"
         >
@@ -125,16 +125,16 @@ export function Modal({
           >
             <IconClose />
           </button>
-        </motion.header>
-        <motion.div
+        </m.header>
+        <m.div
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { delay: reduce ? 0 : 0.18, duration: 0.3 } }}
           exit={{ opacity: 0, transition: { duration: 0.12 } }}
         >
           {children}
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </div>,
     document.body,
   );

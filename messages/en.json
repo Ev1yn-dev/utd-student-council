@@ -730,6 +730,24 @@
         "missingDev": "No verification tag",
         "missingProd": "No verification tag (import from Google works instead)"
       },
+      "PROTECTION_MODE": {
+        "purpose": "Anti-code-fetching protection: strict (default) = server gate + copy/shortcut/print blocking + DevTools detection; relaxed = without DevTools detection; off = everything off (source maps still refused). Signed-in admins never get the browser-side blocking",
+        "where": "Set it on the host (strict, relaxed or off) and redeploy",
+        "missingDev": "strict",
+        "missingProd": "strict"
+      },
+      "DEV_BYPASS_SECRET": {
+        "purpose": "Owner bypass: open any page with ?dev=<value> to get a 1-hour HttpOnly cookie that skips the gate and every browser-side block (24+ characters)",
+        "where": "Generate one, e.g. node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"; set it on the host only",
+        "missingDev": "No ?dev= bypass",
+        "missingProd": "No ?dev= bypass"
+      },
+      "LIGHTHOUSE_TOKEN": {
+        "purpose": "Secret (32+ characters) for Lighthouse runs with scripts/lighthouse.mjs: the script signs a 15-minute token that passes the anti-code-fetching gate; no User-Agent is ever allowlisted",
+        "where": "Generate one, e.g. node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"; put the same value in .env.local of the machine running the script and on the host",
+        "missingDev": "Lighthouse only gets in when the gate accepts it as a browser",
+        "missingProd": "Lighthouse only gets in when the gate accepts it as a browser"
+      },
       "RATE_LIMIT_ALLOW_IPS": {
         "purpose": "IPs exempt from the site's own rate limits (comma-separated, IPv4/IPv6 and CIDR, e.g. 203.0.113.7,2001:db8::/48) — bot blocks, bans and Cloudflare still apply",
         "where": "Sign in as an administrator and open /api/admin/whoami; the ip value is the address the server sees",
@@ -808,6 +826,7 @@
       "upload_rejected": "Upload rejected",
       "login": "Sign-in",
       "logout_all": "Signed out everywhere",
+      "dev_bypass": "Owner bypass cookie issued (?dev=)",
       "error": "Server error"
     },
     "nav": "Security"

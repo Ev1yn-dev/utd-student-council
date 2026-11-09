@@ -1,7 +1,6 @@
 "use client";
 
 import { MessageSquareText } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -11,19 +10,17 @@ import { cn } from "@/lib/utils";
 
 /** Emblem in the header: transparent AVIF (WebP / PNG fallback), fixed box so nothing shifts while it loads. */
 function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt: string; delay: number; className?: string }) {
-  const reduce = useReducedMotion();
+  // CSS pop-in (globals.css .logo-pop): painted with the first frame, no JS needed
   return (
-    <motion.span
-      initial={reduce ? false : { scale: 0.3, opacity: 0, rotate: -20 }}
-      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-      transition={{ type: "spring", stiffness: 380, damping: 16, delay }}
-      className={`no-select block h-9 w-9 shrink-0 sm:h-11 sm:w-11 md:h-[54px] md:w-[54px] ${className ?? ""}`}
+    <span
+      style={{ animationDelay: `${delay}s` }}
+      className={`logo-pop no-select block h-9 w-9 shrink-0 sm:h-11 sm:w-11 md:h-[54px] md:w-[54px] ${className ?? ""}`}
     >
       <picture>
         <source type="image/avif" srcSet={`/brand/logo-${name}-128.avif 128w, /brand/logo-${name}-256.avif 256w`} sizes="54px" />
         <img src={`/brand/logo-${name}-128.png`} srcSet={`/brand/logo-${name}-128.webp 128w, /brand/logo-${name}-256.webp 256w`} sizes="54px" alt={alt} width={54} height={54} className="h-full w-full object-contain" draggable={false} />
       </picture>
-    </motion.span>
+    </span>
   );
 }
 

@@ -730,6 +730,24 @@
         "missingDev": "ไม่มีแท็กยืนยัน",
         "missingProd": "ไม่มีแท็กยืนยัน (ใช้ Import จาก Google แทนได้)"
       },
+      "PROTECTION_MODE": {
+        "purpose": "ระดับระบบกันดึงโค้ด: strict (ค่าเริ่มต้น) = ด่านฝั่งเซิร์ฟเวอร์ + กันคัดลอก/คีย์ลัด/พิมพ์ + ตรวจ DevTools; relaxed = ไม่ตรวจ DevTools; off = ปิดทั้งหมด (ไฟล์ .map ยังถูกปฏิเสธ) ผู้ดูแลระบบที่ล็อกอินอยู่ไม่โดนการกันฝั่งเบราว์เซอร์เสมอ",
+        "where": "ตั้งค่าในโฮสต์ (strict, relaxed หรือ off) แล้ว redeploy",
+        "missingDev": "strict",
+        "missingProd": "strict"
+      },
+      "DEV_BYPASS_SECRET": {
+        "purpose": "ทางผ่านของเจ้าของเว็บ: เปิดหน้าใดก็ได้ด้วย ?dev=<ค่านี้> จะได้คุกกี้ HttpOnly อายุ 1 ชั่วโมงที่ข้ามด่านและการกันฝั่งเบราว์เซอร์ทั้งหมด (อย่างน้อย 24 ตัวอักษร)",
+        "where": "สร้างเอง เช่น node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\" ใส่ในโฮสต์เท่านั้น",
+        "missingDev": "ไม่มีทางผ่าน ?dev=",
+        "missingProd": "ไม่มีทางผ่าน ?dev="
+      },
+      "LIGHTHOUSE_TOKEN": {
+        "purpose": "กุญแจลับ (อย่างน้อย 32 ตัวอักษร) สำหรับรัน Lighthouse ด้วย scripts/lighthouse.mjs: สคริปต์สร้างโทเคนอายุ 15 นาทีให้ผ่านระบบกันดึงโค้ดได้ ไม่มีการปล่อยผ่านด้วย User-Agent",
+        "where": "สร้างเอง เช่น node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\" ใส่ค่าเดียวกันใน .env.local ของเครื่องที่รันสคริปต์ และในโฮสต์",
+        "missingDev": "รัน Lighthouse ได้เฉพาะแบบที่ระบบกันดึงโค้ดยอมรับว่าเป็นเบราว์เซอร์",
+        "missingProd": "รัน Lighthouse ได้เฉพาะแบบที่ระบบกันดึงโค้ดยอมรับว่าเป็นเบราว์เซอร์"
+      },
       "RATE_LIMIT_ALLOW_IPS": {
         "purpose": "รายการ IP ที่ไม่ถูกจำกัดจำนวนคำขอของเว็บ (คั่นด้วยจุลภาค รองรับ IPv4/IPv6 และ CIDR เช่น 203.0.113.7,2001:db8::/48) — ยังผ่านการกันบอท การแบน และ Cloudflare ตามปกติ",
         "where": "ล็อกอินเป็นผู้ดูแลระบบแล้วเปิด /api/admin/whoami ค่า ip คือ IP ที่เซิร์ฟเวอร์เห็น",
@@ -808,6 +826,7 @@
       "upload_rejected": "ไฟล์อัปโหลดถูกปฏิเสธ",
       "login": "เข้าสู่ระบบ",
       "logout_all": "ออกจากระบบทุกอุปกรณ์",
+      "dev_bypass": "ออกคุกกี้ข้ามระบบป้องกันของเจ้าของเว็บ (?dev=)",
       "error": "ข้อผิดพลาดของระบบ"
     },
     "nav": "ความปลอดภัย"

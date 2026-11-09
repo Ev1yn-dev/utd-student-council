@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquareText } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -102,7 +102,7 @@ export function MobileDock() {
       >
         {/* three bars morph into an X */}
         {[-6, 0, 6].map((y, i) => (
-          <motion.span
+          <m.span
             key={i}
             aria-hidden
             className="absolute h-[2px] w-5 rounded-full bg-white"
@@ -115,7 +115,7 @@ export function MobileDock() {
 
       <AnimatePresence>
         {open && (
-          <motion.ul
+          <m.ul
             id="contact-dock"
             aria-label={t("dock.label")}
             className="absolute right-0 top-full z-40 mt-2 flex w-[calc(100vw-2rem)] max-w-[22rem] flex-col items-end gap-2"
@@ -124,7 +124,7 @@ export function MobileDock() {
             exit="hidden"
             variants={{ shown: { transition: reduce ? {} : { staggerChildren: 0.045 } }, hidden: { transition: reduce ? {} : { staggerChildren: 0.03, staggerDirection: -1 } } }}
           >
-            <motion.li
+            <m.li
               className="flex max-w-full justify-end"
               variants={{ hidden: { opacity: 0, y: -10, scale: 0.85 }, shown: { opacity: 1, y: 0, scale: 1 } }}
               transition={reduce ? { duration: 0 } : SPRING}
@@ -142,24 +142,24 @@ export function MobileDock() {
                 <span>{t("header.voice")}</span>
                 <span className="grid h-8 w-8 place-items-center"><MessageSquareText size={20} strokeWidth={1.75} aria-hidden /></span>
               </Link>
-            </motion.li>
+            </m.li>
             {ORDER.map((k) => {
               const isOpen = active === k;
               const c = channel(k);
               return (
-                <motion.li
+                <m.li
                   key={k}
                   className="flex max-w-full justify-end"
                   variants={{ hidden: { opacity: 0, y: -10, scale: 0.85 }, shown: { opacity: 1, y: 0, scale: 1 } }}
                   transition={reduce ? { duration: 0 } : SPRING}
                 >
-                  <motion.div
+                  <m.div
                     layout={!reduce}
                     transition={SPRING}
                     style={{ borderRadius: 22 }}
                     className="flex max-w-full flex-row-reverse items-center overflow-hidden border border-white/20 bg-brand-deep/95 text-on-brand shadow-[0_10px_24px_-10px_rgb(5_13_36/0.7)] backdrop-blur-md"
                   >
-                    <motion.button
+                    <m.button
                       layout={!reduce ? "position" : false}
                       type="button"
                       onClick={() => toggle(k)}
@@ -169,10 +169,10 @@ export function MobileDock() {
                       className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-full", isOpen && "bg-white/10")}
                     >
                       <Icon name={ICON[k]} size={20} className="text-white" />
-                    </motion.button>
+                    </m.button>
                     <AnimatePresence initial={false}>
                       {isOpen && (
-                        <motion.div
+                        <m.div
                           id={`dock-${k}`}
                           key="content"
                           layout={!reduce ? "position" : false}
@@ -204,14 +204,14 @@ export function MobileDock() {
                               {c.label}
                             </a>
                           )}
-                        </motion.div>
+                        </m.div>
                       )}
                     </AnimatePresence>
-                  </motion.div>
-                </motion.li>
+                  </m.div>
+                </m.li>
               );
             })}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
 

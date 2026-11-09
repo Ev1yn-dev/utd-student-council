@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { audit, googleVerified, resolveAccess, syncProfile } from "@/lib/auth";
 import { normalizeEmail } from "@/lib/env";
 import { SITE_URL } from "@/lib/site";
-import { RL_BYPASS_TTL_SEC, issueBypass, rlBypassCookie } from "@/lib/rl-bypass";
+import { RL_BYPASS_TTL_SEC, issueBypass, noProtectHint, rlBypassCookie } from "@/lib/rl-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
   const bypass = access === "admin" ? issueBypass(email) : null;
   if (bypass) {
     res.cookies.set(rlBypassCookie(bypass));
+    res.cookies.set(noProtectHint()); // the public pages stop the copy / DevTools blocking for this browser
     await audit({ id: user.id, email }, "rl_bypass:issue", undefined, undefined, { ttl_h: RL_BYPASS_TTL_SEC / 3600 });
   }
   return res;

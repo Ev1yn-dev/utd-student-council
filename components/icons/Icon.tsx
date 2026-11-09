@@ -1,22 +1,12 @@
 // One icon component for the whole site. Glyphs: Phosphor Icons (MIT, duotone weight); brand marks: Simple Icons (CC0).
 // The duotone fill layer is coloured pink in globals.css (.ico), the outline uses currentColor — so icons read
-// navy/white + pink everywhere. Uses the `ssr` entry (no React context) so it renders in server and client components.
-import {
-  ArrowCounterClockwise, ArrowLeft, ArrowSquareOut, ArrowUp, ArrowsOut, CalendarBlank, CaretDown, CaretLeft, CaretRight,
-  Buildings, ChalkboardTeacher, Check, Crown, MapPin, Phone, Printer, Flag, Globe, List, Image as ImageIcon, Images, Info, LinkSimple, MagnifyingGlass, Medal, Megaphone, PushPin,
-  Star, User, UsersThree, X,
-} from "@phosphor-icons/react/ssr";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+// navy/white + pink everywhere. The glyph markup is pre-rendered by scripts/gen-icons.mjs (components/icons/glyphs.ts):
+// only the icons and weights in use reach the browser, not the whole icon library. No React context: renders in server
+// and client components alike.
 import { siFacebook, siInstagram, siTiktok } from "simple-icons";
+import { GLYPHS } from "@/components/icons/glyphs";
 import { cn } from "@/lib/utils";
 
-const GLYPHS = {
-  search: MagnifyingGlass, calendar: CalendarBlank, link: LinkSimple, external: ArrowSquareOut, close: X,
-  chevronLeft: CaretLeft, chevronRight: CaretRight, chevronDown: CaretDown, arrowUp: ArrowUp, arrowLeft: ArrowLeft,
-  crown: Crown, medal: Medal, star: Star, pin: PushPin, megaphone: Megaphone, images: Images, image: ImageIcon, flag: Flag,
-  users: UsersThree, teacher: ChalkboardTeacher, info: Info, expand: ArrowsOut, reset: ArrowCounterClockwise, user: User,
-  globe: Globe, check: Check, menu: List, mapPin: MapPin, phone: Phone, fax: Printer, buildings: Buildings,
-} satisfies Record<string, PhosphorIcon>;
 const BRANDS = { facebook: siFacebook, instagram: siInstagram, tiktok: siTiktok };
 
 export type IconName = keyof typeof GLYPHS | keyof typeof BRANDS;
@@ -40,8 +30,19 @@ export function Icon({ name, size = 20, className, weight = "duotone", label }: 
       </svg>
     );
   }
-  const G = GLYPHS[name as keyof typeof GLYPHS];
-  return <G size={size} weight={weight} className={cn("ico shrink-0", className)} {...a11y} />;
+  const g: { duotone: string; bold?: string; fill?: string } = GLYPHS[name as keyof typeof GLYPHS];
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      fill="currentColor"
+      viewBox="0 0 256 256"
+      className={cn("ico shrink-0", className)}
+      {...a11y}
+      dangerouslySetInnerHTML={{ __html: g[weight] ?? g.duotone }}
+    />
+  );
 }
 
 // Named aliases keep call sites short and typed: <IconSearch width={16} /> === <Icon name="search" size={16} />.

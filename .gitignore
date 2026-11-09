@@ -69,3 +69,7 @@ supabase/.temp/
 # student rosters (names and IDs of minors): never commit
 *.csv
 roster*.json
+
+# raw Lighthouse reports (large; contain page config): summaries and timing tables are committed
+docs/lighthouse/*/*-mobile.json
+docs/lighthouse/*/*-desktop.json

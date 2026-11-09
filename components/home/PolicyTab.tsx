@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useTranslations } from "next-intl";
 import { ViewTransition } from "react";
 import type { Policy } from "@/lib/content";
@@ -15,7 +15,7 @@ import { Link } from "@/i18n/navigation";
 function Progress({ value }: { value: number }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
-      <motion.div
+      <m.div
         className="h-full rounded-full bg-gradient-to-r from-brand-mid via-pink to-pink-400"
         initial={{ width: 0 }}
         whileInView={{ width: `${value}%` }}

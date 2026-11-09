@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useLocale } from "next-intl";
 import { IconCalendar, IconChevronRight } from "@/components/icons/Icon";
 import { Illustration } from "@/components/icons/Illustration";
@@ -16,13 +16,13 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 export function CardItem({ index, children, className }: { index: number; children: React.ReactNode; className?: string }) {
   const reduce = useReducedMotion();
   return (
-    <motion.li
+    <m.li
       layout={reduce ? false : "position"}
       className={className}
       exit={{ opacity: 0, transition: { duration: 0.15 } }}
       transition={{ layout: { duration: 0.35, ease: EASE } }}
     >
-      <motion.div
+      <m.div
         className="h-full"
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -30,8 +30,8 @@ export function CardItem({ index, children, className }: { index: number; childr
         transition={{ duration: 0.5, ease: EASE, delay: reduce ? 0 : Math.min(index, 12) * 0.06 }}
       >
         {children}
-      </motion.div>
-    </motion.li>
+      </m.div>
+    </m.li>
   );
 }
 

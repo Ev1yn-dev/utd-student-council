@@ -17,7 +17,9 @@ import th from "@/messages/th.json";
 // so switching language never swaps fonts or shifts layout.
 // Preload only the Thai files of the two text fonts: the Latin files and the serif still load through @font-face when a
 // page uses them (display: swap), but no longer compete with the banner (LCP) for bandwidth on the first view.
-const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai"], weight: ["500", "600", "700"], display: "swap" });
+// Kanit (headings) is not preloaded either: on a phone the hero image is the LCP and must get the bandwidth first;
+// headings swap in from @font-face (size-adjusted fallback, so no layout shift).
+const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai"], weight: ["500", "600", "700"], display: "swap", preload: false });
 const plex = IBM_Plex_Sans_Thai({ variable: "--font-plex", subsets: ["thai"], weight: ["400", "500"], display: "swap" });
 const notoSerif = Noto_Serif_Thai({ variable: "--font-noto-serif", subsets: ["thai", "latin"], weight: ["400", "500", "700"], display: "swap", preload: false });
 

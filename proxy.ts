@@ -1,12 +1,14 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
-import { GATE_COOKIE, botClass, decoyBody, gate, pathKind } from "@/lib/browser-gate";
+import {
+  DEV_COOKIE, DEV_TTL_SEC, GATE_COOKIE, NO_PROTECT_HINT, botClass, decoyBody, gate, issueDevCookie, pathKind, protectionMode, validDevCookie, validDevSecret,
+} from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { clientIp } from "@/lib/client-ip";
 import { SUPABASE_URL, isAdminUser, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
-import { RL_BYPASS_COOKIE, ipAllowlisted, issueBypass, rlBypassCookie, verifyBypass } from "@/lib/rl-bypass";
+import { RL_BYPASS_COOKIE, ipAllowlisted, issueBypass, noProtectHint, rlBypassCookie, verifyBypass } from "@/lib/rl-bypass";
 import { auditBypass, logSecurity } from "@/lib/security-log";
 import { SITE_HOST, SITE_URL } from "@/lib/site";
 import { refreshSession } from "@/lib/supabase/proxy";
@@ -108,12 +110,31 @@ export async function proxy(req: NextRequest) {
     return decoy(req);
   }
 
+  // the owner's bypass: ?dev=<DEV_BYPASS_SECRET> -> 1 h HttpOnly cookie, then the same URL without the secret
+  const devParam = req.nextUrl.searchParams.get("dev");
+  if (devParam !== null) {
+    const clean = req.nextUrl.clone();
+    clean.searchParams.delete("dev");
+    const res = NextResponse.redirect(clean, 303);
+    res.headers.set("cache-control", "no-store");
+    res.headers.set("referrer-policy", "no-referrer");
+    const value = validDevSecret(devParam) ? issueDevCookie() : null;
+    if (value) {
+      const secure = !isDev;
+      res.cookies.set({ name: DEV_COOKIE, value, httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: DEV_TTL_SEC });
+      res.cookies.set({ name: NO_PROTECT_HINT, value: "1", httpOnly: false, secure, sameSite: "lax", path: "/", maxAge: DEV_TTL_SEC });
+      void logSecurity("dev_bypass", { ip, path: pathname });
+    }
+    return res;
+  }
+  const bypass = protectionMode() === "off" || validDevCookie(req.cookies.get(DEV_COOKIE)?.value);
+
   // anti-code-fetching gate on every request. Search engines must pass a reverse + forward DNS check
   // (cached per IP); link-preview bots and health checks are recognised by User-Agent.
   const ua = req.headers.get("user-agent") ?? "";
   const bot = botClass(ua);
   const botOk = bot === "ua" || (bot === "dns" && (isDev || (await verifySearchBot(ip, ua)) === true));
-  if (gate(req.headers, req.method, pathname, req.cookies.get(GATE_COOKIE)?.value, botOk) === "decoy") return decoy(req);
+  if (gate(req.headers, req.method, pathname, req.cookies.get(GATE_COOKIE)?.value, botOk, bypass) === "decoy") return decoy(req);
 
   // files: nothing else to do; Cloudflare must not cache them, or it would hand them to anyone without the gate
   if (pathKind(pathname) === "asset") {
@@ -223,7 +244,10 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
     // before it covered every path): issue one, so /api, the voice form and the rest of the back office skip the limits
     if (isAdminUser(user) && !verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value)) {
       const value = issueBypass(user.email!);
-      if (value) res.cookies.set(rlBypassCookie(value));
+      if (value) {
+        res.cookies.set(rlBypassCookie(value));
+        res.cookies.set(noProtectHint());
+      }
     }
   }
   return res;

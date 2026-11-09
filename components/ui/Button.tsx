@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -29,23 +28,20 @@ type Props = {
 
 /** Button with magnetic hover (pointer devices) and ripple on press. */
 export function Button({ href, variant = "primary", className, children, type = "button", disabled, onClick }: Props) {
-  const reduce = useReducedMotion();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 220, damping: 18 });
-  const sy = useSpring(y, { stiffness: 220, damping: 18 });
+  // magnetic pull: a CSS transform with a springy transition (no animation library on the page's first JS)
+  const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [pull, setPull] = useState<[number, number]>([0, 0]);
   const ref = useRef<HTMLSpanElement>(null);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
 
   const onMove = (e: React.PointerEvent) => {
-    if (reduce || e.pointerType !== "mouse" || !ref.current) return;
+    if (e.pointerType !== "mouse" || !ref.current || reduce()) return;
     const r = ref.current.getBoundingClientRect();
-    x.set((e.clientX - (r.left + r.width / 2)) * 0.18);
-    y.set((e.clientY - (r.top + r.height / 2)) * 0.28);
+    setPull([(e.clientX - (r.left + r.width / 2)) * 0.18, (e.clientY - (r.top + r.height / 2)) * 0.28]);
   };
-  const reset = () => { x.set(0); y.set(0); };
+  const reset = () => setPull([0, 0]);
   const onDown = (e: React.PointerEvent) => {
-    if (reduce || !ref.current) return;
+    if (!ref.current || reduce()) return;
     const r = ref.current.getBoundingClientRect();
     const id = Date.now() + Math.random();
     setRipples((rs) => [...rs, { id, x: e.clientX - r.left, y: e.clientY - r.top }]);
@@ -68,12 +64,18 @@ export function Button({ href, variant = "primary", className, children, type = 
   );
 
   return (
-    <motion.span ref={ref} style={{ x: sx, y: sy }} className="inline-block" onPointerMove={onMove} onPointerLeave={reset}>
+    <span
+      ref={ref}
+      style={{ transform: `translate3d(${pull[0]}px, ${pull[1]}px, 0)`, transition: "transform 450ms cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+      className="inline-block"
+      onPointerMove={onMove}
+      onPointerLeave={reset}
+    >
       {href ? (
         <Link href={href} className={cls} onPointerDown={onDown}>{inner}</Link>
       ) : (
         <button type={type} className={cls} disabled={disabled} onClick={onClick} onPointerDown={onDown}>{inner}</button>
       )}
-    </motion.span>
+    </span>
   );
 }

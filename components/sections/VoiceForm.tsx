@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect, useState } from "react";
 import { submitVoice, voiceOpen, type VoiceState } from "@/app/actions/voice";
@@ -17,7 +17,7 @@ function Bloom() {
   return (
     <svg viewBox="-50 -50 100 100" className="mx-auto h-28 w-28" aria-hidden>
       {[0, 72, 144, 216, 288].map((a, i) => (
-        <motion.ellipse
+        <m.ellipse
           key={a}
           cx={0}
           cy={-22}
@@ -43,6 +43,9 @@ export function VoiceForm() {
   const [state, action, pending] = useActionState(submitVoice, INITIAL);
   // the page is static: ask the server once whether a student roster is in place (null = still asking)
   const [open, setOpen] = useState<boolean | null>(null);
+  // Turnstile (third party) loads on the first touch / focus / key in the form, never with the page
+  const [captcha, setCaptcha] = useState(false);
+  const wake = () => setCaptcha(true);
   useEffect(() => {
     let alive = true;
     voiceOpen().then((v) => alive && setOpen(v), () => alive && setOpen(true));
@@ -57,7 +60,7 @@ export function VoiceForm() {
         <Bloom />
         <h3 className="text-2xl font-semibold">{t("done")}</h3>
         <p className="text-muted">{t("keep")}</p>
-        <p className="font-display text-3xl font-semibold tracking-wider text-pink-ink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
+        <p data-allow-copy className="font-display text-3xl font-semibold tracking-wider text-pink-ink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
       </div>
     );
   }
@@ -73,8 +76,16 @@ export function VoiceForm() {
 
   const input = "w-full rounded-md border-[1.5px] border-line bg-surface px-4 py-3 text-ink placeholder:text-muted focus:border-pink";
   return (
-    <form data-swap action={action} className="space-y-5 rounded-lg border border-line bg-page p-6 shadow-soft md:p-10" noValidate>
-      {SITE_KEY && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />}
+    <form
+      data-swap
+      action={action}
+      className="space-y-5 rounded-lg border border-line bg-page p-6 shadow-soft md:p-10"
+      noValidate
+      onPointerDownCapture={wake}
+      onFocusCapture={wake}
+      onKeyDownCapture={wake}
+    >
+      {SITE_KEY && captcha && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />}
       <div>
         <h2 className="text-3xl font-semibold">{t("formTitle")}</h2>
         <p className="mt-1 text-muted">{t("formSub")}</p>

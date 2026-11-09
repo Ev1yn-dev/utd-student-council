@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
+import { AnimatePresence, m, useReducedMotion, type PanInfo } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -68,7 +68,7 @@ function Stage({
       }}
     >
       <AnimatePresence initial={false} custom={dir}>
-        <motion.div
+        <m.div
           key={i}
           custom={dir}
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
@@ -88,7 +88,7 @@ function Stage({
             className="h-full w-full"
             imgClassName={fit ? "!object-contain" : undefined}
           />
-        </motion.div>
+        </m.div>
       </AnimatePresence>
       {children}
       {n > 1 && (
@@ -177,7 +177,7 @@ function FullScreen({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [i, go, onClose]);
   return createPortal(
-    <motion.div
+    <m.div
       role="dialog"
       aria-modal="true"
       aria-label={t("fullDialog", { alt })}
@@ -194,7 +194,7 @@ function FullScreen({
       </div>
       <Stage photos={photos} alt={alt} i={i} dir={dir} go={go} sizes="100vw" fit className="min-h-0 flex-1 rounded-2xl !bg-transparent" />
       {photos.length > 1 && <div className="mx-auto mt-3 max-w-full"><Thumbs photos={photos} alt={alt} i={i} go={go} dark /></div>}
-    </motion.div>,
+    </m.div>,
     document.body,
   );
 }

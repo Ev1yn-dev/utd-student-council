@@ -17,6 +17,10 @@ export const RL_BYPASS_TTL_SEC = 12 * 3600;
 /** Paths of cookies issued before the bypass covered the whole site; cleared on sign-out. */
 export const RL_BYPASS_OLD_PATHS = ["/auth", "/th/admin", "/en/admin"];
 
+/** Readable hint next to it: tells the page to ask /api/gate whether to skip the browser-side blocking (lib/browser-gate.ts). */
+export const noProtectHint = (maxAge = RL_BYPASS_TTL_SEC) =>
+  ({ name: "utd_np", value: maxAge ? "1" : "", httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/", maxAge });
+
 /** Cookie options (path "/"); maxAge 0 clears it. */
 export const rlBypassCookie = (value: string, maxAge = RL_BYPASS_TTL_SEC, path = "/") =>
   ({ name: RL_BYPASS_COOKIE, value, httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path, maxAge });

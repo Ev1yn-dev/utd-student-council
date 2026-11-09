@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocaleSwitch } from "@/components/i18n/LocaleProvider";
@@ -93,7 +93,7 @@ export function LocaleSwitch({ variant = "button", compact, className }: { varia
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id={menuId}
             role="menu"
             aria-label={t("menu")}
@@ -132,7 +132,7 @@ export function LocaleSwitch({ variant = "button", compact, className }: { varia
                 {l === locale && <Icon name="check" size={16} weight="bold" className="text-pink-ink" />}
               </button>
             ))}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

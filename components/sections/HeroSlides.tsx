@@ -1,11 +1,24 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { Photo } from "@/lib/content";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons/Icon";
+import { HERO_SIZES } from "@/components/sections/hero-sizes";
 import { cn } from "@/lib/utils";
+
+/** prefers-reduced-motion, read after hydration (no motion library on the first view). */
+function useReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduce(q.matches);
+    on();
+    q.addEventListener("change", on);
+    return () => q.removeEventListener("change", on);
+  }, []);
+  return reduce;
+}
 
 const INTERVAL = 6000;
 const SWIPE = 0.18; // share of the frame width a drag must cover to change slide
@@ -134,22 +147,24 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
             >
               {/* fills its slide, cropped around the focal point; Ken Burns drift on the current slide only */}
               <picture className="contents">
-                {ph.avifSet && <source type="image/avif" srcSet={ph.avifSet} sizes="(max-width: 1320px) 100vw, 1320px" />}
-                <motion.img
+                {ph.avifSet && <source type="image/avif" srcSet={ph.avifSet} sizes={HERO_SIZES} />}
+                <img
                   src={ph.src}
                   srcSet={ph.srcSet}
-                  sizes="(max-width: 1320px) 100vw, 1320px"
+                  sizes={HERO_SIZES}
                   alt={k === i ? altOf(ph) : ""}
                   width={ph.w}
                   height={ph.h}
                   draggable={false}
                   fetchPriority={k === 0 ? "high" : "low"}
                   loading={k === 0 ? "eager" : "lazy"}
-                  className="no-select pointer-events-none absolute inset-0 h-full w-full object-cover"
-                  style={{ objectPosition: ph.focal ?? "50% 50%", transformOrigin: ORIGINS[k % ORIGINS.length] }}
-                  initial={false}
-                  animate={{ scale: k === i && !reduce && !ph.plain ? 1.08 : 1 }}
-                  transition={{ scale: { duration: k === i ? (INTERVAL + 1200) / 1000 : 0.4, ease: "linear" } }}
+                  decoding={k === 0 ? "sync" : "async"}
+                  className={cn("no-select pointer-events-none absolute inset-0 h-full w-full object-cover", k === i && !reduce && !ph.plain && "ken-burns")}
+                  style={{
+                    objectPosition: ph.focal ?? "50% 50%",
+                    transformOrigin: ORIGINS[k % ORIGINS.length],
+                    animationDuration: `${(ph.seconds ?? INTERVAL / 1000) * 1000 + 1200}ms`,
+                  }}
                 />
               </picture>
             </div>

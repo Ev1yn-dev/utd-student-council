@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import dynamic from "next/dynamic";
+import { AnimatePresence, m as mo } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { Advisor, Contact, Img, L, Member } from "@/lib/content";
@@ -9,7 +10,6 @@ import { DEPARTMENTS } from "@/lib/council-departments";
 import { EmptyState } from "@/components/home/EmptyState";
 import { CardItem, Lift, ZoneTitle } from "@/components/home/parts";
 import { Tx, useL } from "@/components/i18n/LocaleProvider";
-import { Modal } from "@/components/ui/Modal";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { IconCrown, IconInstagram, IconMedal, IconStar, IconTeacher, IconUser, IconUsers } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,9 @@ const ROLE_TAG: Record<CouncilRole, { tone: Tone; icon: Badge["icon"] }> = {
   deputy_head: { tone: "sky", icon: "star" },
   member: { tone: "plain", icon: "user" },
 };
+
+// popups load on first open
+const Modal = dynamic(() => import("@/components/ui/Modal").then((r) => r.Modal));
 
 export function PeopleTab({ kind, members, advisors, year, query, onClear }: {
   kind: "council" | "advisor"; members: Member[]; advisors: Advisor[]; year: number; query: string; onClear: () => void;
@@ -182,7 +185,7 @@ function MemberCard({ m, onOpen }: { m: Member; onOpen: () => void }) {
   const role = pick(m.role).value;
   return (
     <Lift>
-      <motion.article
+      <mo.article
         layoutId={`person-${m.id}`}
         style={{ borderRadius: 20 }}
         className={cn(
@@ -224,7 +227,7 @@ function MemberCard({ m, onOpen }: { m: Member; onOpen: () => void }) {
             )}
           </div>
         </div>
-      </motion.article>
+      </mo.article>
     </Lift>
   );
 }
@@ -310,7 +313,7 @@ function AdvisorCard({ p, onOpen }: { p: Person; onOpen: () => void }) {
   const pick = useL();
   return (
     <Lift>
-      <motion.article
+      <mo.article
         layoutId={`person-${p.id}`}
         style={{ borderRadius: 20 }}
         className="h-full overflow-hidden border border-line bg-surface shadow-soft transition-shadow duration-300 group-hover:shadow-lift"
@@ -326,7 +329,7 @@ function AdvisorCard({ p, onOpen }: { p: Person; onOpen: () => void }) {
             {p.chip && <span className="mt-auto rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-[0.72rem] font-medium text-ink">{p.chip}</span>}
           </div>
         </button>
-      </motion.article>
+      </mo.article>
     </Lift>
   );
 }

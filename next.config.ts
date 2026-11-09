@@ -51,7 +51,8 @@ const nextConfig: NextConfig = {
       { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
     const files = [
-      { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+      // 30 days: a changed file gets a new name (banner-02-1 -> banner-03-1), never new content under an old name
+      { key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=31536000" },
       { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
     return [

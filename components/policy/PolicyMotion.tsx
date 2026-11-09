@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useInView, useReducedMotion, useScroll, useSpring } from "motion/react";
+import { animate, m, useInView, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Tx } from "@/components/i18n/LocaleProvider";
@@ -35,7 +35,7 @@ export function PolicyProgress({ value, status }: { value: number; status: Polic
         <span className="text-sm text-muted">{t(`state.${status}`)}</span>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-surface-2">
-        <motion.div
+        <m.div
           className="gold-shimmer h-full rounded-full bg-gradient-to-r from-brand-mid via-pink to-pink-400"
           initial={{ width: 0 }}
           animate={inView ? { width: `${value}%` } : undefined}
@@ -56,13 +56,13 @@ export function PolicyTimeline({ steps }: { steps: TimelineStep[] }) {
   return (
     <ol ref={ref} className="relative space-y-5 pl-7">
       <span aria-hidden className="absolute bottom-1 left-[7px] top-1 w-0.5 rounded bg-line" />
-      <motion.span
+      <m.span
         aria-hidden
         className="absolute bottom-1 left-[7px] top-1 w-0.5 origin-top rounded bg-gradient-to-b from-pink to-brand-mid"
         style={{ scaleY: reduce ? 1 : draw }}
       />
       {steps.map((s, i) => (
-        <motion.li
+        <m.li
           key={i}
           className="relative"
           initial={reduce ? { opacity: 0 } : { opacity: 0, x: 12 }}
@@ -73,7 +73,7 @@ export function PolicyTimeline({ steps }: { steps: TimelineStep[] }) {
           <span aria-hidden className="absolute -left-7 top-1.5 h-4 w-4 rounded-full border-[3px] border-surface bg-pink shadow-[0_0_0_3px_var(--c-pink-soft)]" />
           <time dateTime={s.date} className="text-xs font-semibold text-pink-ink">{formatDate(s.date, locale)}</time>
           <p className="text-sm text-ink"><Tx v={s.text} /></p>
-        </motion.li>
+        </m.li>
       ))}
     </ol>
   );

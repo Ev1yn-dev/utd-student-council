@@ -1,13 +1,11 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, LayoutGroup, m, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { YearContent } from "@/lib/content";
-import { NewsTab } from "@/components/home/NewsTab";
+import dynamic from "next/dynamic";
 import { Illustration } from "@/components/icons/Illustration";
-import { PeopleTab } from "@/components/home/PeopleTab";
-import { PolicyTab } from "@/components/home/PolicyTab";
 import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/icons/Icon";
 import { useLocale, useTranslations } from "next-intl";
 import { TAB_KEYS, filterContent, homeHref, tabCount, type TabKey } from "@/lib/search";
@@ -20,6 +18,11 @@ const TAB_ICON: Record<TabKey, typeof IconUsers> = { news: IconMegaphone, policy
  * Tab changes stay client-side (history.replaceState keeps ?tab= shareable without a server round-trip);
  * a year change navigates so the server sends that year's data.
  */
+// each tab is its own chunk: a page view loads only the tab it shows (server-rendered as before)
+const NewsTab = dynamic(() => import("@/components/home/NewsTab").then((r) => r.NewsTab));
+const PolicyTab = dynamic(() => import("@/components/home/PolicyTab").then((r) => r.PolicyTab));
+const PeopleTab = dynamic(() => import("@/components/home/PeopleTab").then((r) => r.PeopleTab));
+
 export function HomeTabs({ content, initialTab }: { content: YearContent; initialTab: TabKey }) {
   const router = useRouter();
   const tr = useTranslations();
@@ -128,7 +131,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                   />
                   <AnimatePresence>
                     {query && (
-                      <motion.button
+                      <m.button
                         type="button"
                         onClick={clear}
                         aria-label={tr("search.clear")}
@@ -138,7 +141,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                         className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-surface-2 text-muted hover:text-ink"
                       >
                         <IconClose width={14} height={14} />
-                      </motion.button>
+                      </m.button>
                     )}
                   </AnimatePresence>
                 </span>
@@ -178,7 +181,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                   >
                     {/* one highlight, rendered (also on the server) inside the active tab; layoutId slides it to the next tab */}
                     {active && (
-                      <motion.span
+                      <m.span
                         layoutId="tab-highlight"
                         aria-hidden
                         className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand to-brand-mid shadow-[0_6px_16px_-8px_var(--c-brand)]"
@@ -214,7 +217,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
         <Illustration name="decor-mandapa" className="pointer-events-none absolute right-0 top-0 -z-10 hidden w-56 opacity-[0.06] md:block" />
         <Illustration name="decor-kaefarang" className="pointer-events-none absolute bottom-0 left-0 -z-10 hidden w-44 opacity-[0.08] md:block" />
         <AnimatePresence mode="wait" initial={false} custom={dir}>
-          <motion.div
+          <m.div
             key={`${tab}-${content.year}`}
             custom={dir}
             initial={reduce ? { opacity: 0 } : { opacity: 0, x: dir * 40 }}
@@ -228,7 +231,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
             {(tab === "council" || tab === "advisor") && (
               <PeopleTab kind={tab} members={view.members} advisors={view.advisors} year={content.year} query={view.q} onClear={clear} />
             )}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
     </div>

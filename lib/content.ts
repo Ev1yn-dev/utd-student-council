@@ -273,11 +273,11 @@ export async function getHeroPhotos(): Promise<Photo[]> {
   });
 }
 
-/** Files shipped in public/: /banner/<name>-{768,1280,1920}.webp (school photos) or /banners/<name>-{640,1280,1920,2048}.{avif,webp}
+/** Files shipped in public/: /banner/<name>-{768,1280,1920}.webp (school photos) or /banners/<name>-{640,960,1280,1920,2048}.{avif,webp}
  *  (council banners, shown as delivered). A file never wider than its source: the largest width is capped at w. */
 function staticSlide(id: string, path: string, w: number, h: number, blur: string | null, caption: string, alt: L | null, credit: Photo["credit"]): Photo {
   const banner = path.startsWith("/banners/");
-  const widths = banner ? [640, 1280, 1920, 2048] : [768, 1280, 1920];
+  const widths = banner ? [640, 960, 1280, 1920, 2048] : [768, 1280, 1920];
   // a source narrower than a width gives the same file size twice: keep one candidate per real width
   const real = widths.filter((x, i) => i === 0 || Math.min(x, w) > Math.min(widths[i - 1], w));
   const set = (ext: string) => real.map((x) => `${path}-${x}.${ext} ${Math.min(x, w)}w`).join(", ");

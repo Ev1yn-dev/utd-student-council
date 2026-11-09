@@ -1,5 +1,6 @@
 "use client";
 
+import { LazyMotion } from "motion/react";
 import { NextIntlClientProvider, useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -10,6 +11,9 @@ import { Icon } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
 
 type Messages = Record<Locale, Record<string, unknown>>;
+
+// motion features (animations, layout, gestures) arrive in their own chunk after the first render
+const motionFeatures = () => import("@/components/motion-features").then((r) => r.default);
 type Ctx = { locale: Locale; switching: boolean; switchLocale: (next: Locale) => void };
 const LocaleCtx = createContext<Ctx | null>(null);
 
@@ -112,7 +116,7 @@ export function LocaleProvider({ initial, messages, children }: { initial: Local
   return (
     <LocaleCtx.Provider value={{ locale, switching, switchLocale }}>
       <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Asia/Bangkok">
-        {children}
+        <LazyMotion features={motionFeatures}>{children}</LazyMotion>
       </NextIntlClientProvider>
       {target && to && (
         <div
