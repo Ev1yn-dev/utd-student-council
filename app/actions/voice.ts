@@ -2,7 +2,9 @@
 
 import { headers } from "next/headers";
 import { z } from "zod";
+import { getSession } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
+import { ipAllowlisted } from "@/lib/rl-bypass";
 import { rosterOpen, studentRecord } from "@/lib/roster";
 import { clientIp, hashIp, studentHash, voiceMessageHash } from "@/lib/security";
 import { VOICE_CATEGORY_VALUES } from "@/lib/site";
@@ -11,6 +13,8 @@ import { activeBlock, shouldFlag } from "@/lib/voice-admin";
 import { newCode, saveVoice, storeConfigured } from "@/lib/voice-store";
 
 const PER_STUDENT_PER_DAY = 3;
+/** Administrators (session checked by the Auth server) are not limited per student ID; voice_claim still counts. */
+const ADMIN_PER_STUDENT_PER_DAY = 1_000_000;
 
 const schema = z.object({
   // wrong format and unknown ID give the same message (nothing tells whether an ID exists)
@@ -48,9 +52,13 @@ export async function voiceOpen(): Promise<boolean> {
 
 export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<VoiceState> {
   const ip = clientIp(await headers());
+  const admin = (await getSession())?.role === "admin";
 
-  const rl = await limit("form", ip);
-  if (!rl.ok) return { ok: false, error: "rate", errorValues: { min: Math.ceil(rl.retryAfter / 60) } };
+  // 10 per hour per IP; skipped for administrators and RATE_LIMIT_ALLOW_IPS
+  if (!admin && !ipAllowlisted(ip)) {
+    const rl = await limit("form", ip);
+    if (!rl.ok) return { ok: false, error: "rate", errorValues: { min: Math.ceil(rl.retryAfter / 60) } };
+  }
 
   const parsed = schema.safeParse({
     studentId: fd.get("studentId") ?? "",
@@ -85,7 +93,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     const { data: claim, error } = await adminClient().rpc("voice_claim", {
       p_student_hash: studentHash(studentId),
       p_msg_hash: voiceMessageHash(studentId, message),
-      p_max: PER_STUDENT_PER_DAY,
+      p_max: admin ? ADMIN_PER_STUDENT_PER_DAY : PER_STUDENT_PER_DAY,
     });
     if (error) throw new Error(`voice_claim: ${error.message}`);
     if (claim === "limit") return { ok: false, error: "studentLimit", errorValues: { max: PER_STUDENT_PER_DAY } };

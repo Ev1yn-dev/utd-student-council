@@ -4,9 +4,9 @@ import { routing } from "@/i18n/routing";
 import { GATE_COOKIE, botClass, decoyBody, gate, pathKind } from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { clientIp } from "@/lib/client-ip";
-import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
+import { SUPABASE_URL, isAdminUser, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
-import { RL_BYPASS_COOKIE, RL_BYPASS_SCOPE, verifyBypass } from "@/lib/rl-bypass";
+import { RL_BYPASS_COOKIE, ipAllowlisted, issueBypass, rlBypassCookie, verifyBypass } from "@/lib/rl-bypass";
 import { auditBypass, logSecurity } from "@/lib/security-log";
 import { SITE_HOST, SITE_URL } from "@/lib/site";
 import { refreshSession } from "@/lib/supabase/proxy";
@@ -156,10 +156,12 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
       const bucket = pathname.startsWith("/auth/google") ? "authStart" : pathname.startsWith("/auth/") ? "authCallback" : pathname.startsWith("/api/") ? "api" : "page";
       const r = await limit(bucket, ip);
       if (!r.ok) {
-        // an administrator's signed rl_bypass cookie skips the app's limit on /auth/* and the admin pages only
-        const admin = RL_BYPASS_SCOPE.test(pathname) ? verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value) : null;
+        // skipped for an administrator's signed rl_bypass cookie (any path) and for RATE_LIMIT_ALLOW_IPS
+        const admin = verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value);
         if (admin) {
           void auditBypass(admin, { ip, path: pathname, rule: bucket });
+        } else if (ipAllowlisted(ip)) {
+          console.warn(`[security] rl allowlist used rule=${bucket} path=${pathname}`);
         } else {
           void logSecurity("rate_limited", { ip, path: pathname, detail: { rule: bucket } });
           return deny(429, "Too Many Requests", { "retry-after": String(r.retryAfter) });
@@ -215,6 +217,12 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
       to.pathname = `/${pathname.split("/")[1] === "en" ? "en" : "th"}/login`;
       to.search = "";
       return NextResponse.redirect(to);
+    }
+    // administrator verified by the Auth server just above, without a site-wide bypass cookie yet (cookies issued
+    // before it covered every path): issue one, so /api, the voice form and the rest of the back office skip the limits
+    if (isAdminUser(user) && !verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value)) {
+      const value = issueBypass(user.email!);
+      if (value) res.cookies.set(rlBypassCookie(value));
     }
   }
   return res;

@@ -28,6 +28,7 @@ export const ENV_VARS: EnvVar[] = [
   { name: "SUPABASE_SERVICE_ROLE_KEY", need: "required", public: false, url: "https://supabase.com/dashboard/project/_/settings/api-keys" },
   { name: "UPSTASH_REDIS_REST_URL", need: "optional", public: false, url: "https://console.upstash.com/redis", isTest: (v) => !/^https:\/\//.test(v) },
   { name: "UPSTASH_REDIS_REST_TOKEN", need: "optional", public: false, url: "https://console.upstash.com/redis" },
+  { name: "RATE_LIMIT_ALLOW_IPS", need: "optional", public: false, url: "https://utdsc.com/api/admin/whoami" },
   { name: "NEXT_PUBLIC_TURNSTILE_SITE_KEY", need: "required", public: true, url: "https://dash.cloudflare.com/?to=/:account/turnstile", isTest: (v) => TURNSTILE_TEST_SITE.test(v) },
   { name: "TURNSTILE_SECRET_KEY", need: "required", public: false, url: "https://dash.cloudflare.com/?to=/:account/turnstile", isTest: (v) => TURNSTILE_TEST_SECRET.test(v) },
   { name: "ALLOWED_EMAIL_DOMAIN", need: "optional", public: false, url: "https://admin.google.com/", fallback: "utd.ac.th" },

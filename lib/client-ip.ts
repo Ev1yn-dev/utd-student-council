@@ -43,23 +43,29 @@ const v6 = (ip: string): bigint | null => {
 
 export const isIp = (ip: string) => v4(ip) !== null || v6(ip) !== null;
 
-export function isCloudflareIp(ip: string) {
+/** Whether ip is inside one of the ranges (IPv4 / IPv6, "a.b.c.d/n", "x::/n" or a single address). */
+export function inRanges(ip: string, ranges: string[]) {
   const a = v4(ip);
-  if (a !== null) {
-    return CF_V4.some((c) => {
-      const [base, bits] = c.split("/");
-      const mask = Number(bits) === 0 ? 0 : (~0 << (32 - Number(bits))) >>> 0;
-      return ((a & mask) >>> 0) === ((v4(base)! & mask) >>> 0);
-    });
-  }
-  const b = v6(ip);
-  if (b === null) return false;
-  return CF_V6.some((c) => {
-    const [base, bits] = c.split("/");
-    const shift = BigInt(128 - Number(bits));
-    return b >> shift === v6(base)! >> shift;
+  const b = a === null ? v6(ip) : null;
+  if (a === null && b === null) return false;
+  return ranges.some((c) => {
+    const [base, bitsRaw] = c.trim().split("/");
+    if (a !== null) {
+      const bits = bitsRaw === undefined ? 32 : Number(bitsRaw);
+      const n = v4(base);
+      if (n === null || !Number.isInteger(bits) || bits < 0 || bits > 32) return false;
+      const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
+      return ((a & mask) >>> 0) === ((n & mask) >>> 0);
+    }
+    const bits = bitsRaw === undefined ? 128 : Number(bitsRaw);
+    const n = v6(base);
+    if (n === null || !Number.isInteger(bits) || bits < 0 || bits > 128) return false;
+    const shift = BigInt(128 - bits);
+    return b! >> shift === n >> shift;
   });
 }
+
+export const isCloudflareIp = (ip: string) => inRanges(ip, ip.includes(":") ? CF_V6 : CF_V4);
 
 type HeaderBag = { get(name: string): string | null };
 const first = (v: string | null) => v?.split(",")[0]?.trim() || null;

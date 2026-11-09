@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { after } from "next/server";
 import { ENTITIES, isEntity, rowColumns, type EntityKey } from "@/lib/admin/entities";
 import { parse, type Err } from "@/lib/admin/validate";
@@ -9,6 +10,8 @@ import { applyConsent, applyIgConsent } from "@/lib/admin/consent";
 import { EMAIL_RE, updateAllowed, upsertAllowed } from "@/lib/admin/users";
 import { MEMBERS, STAFF, audit, authorize } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
+import { ipAllowlisted } from "@/lib/rl-bypass";
+import { clientIp } from "@/lib/security";
 import { logSecurity } from "@/lib/security-log";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -154,7 +157,9 @@ export async function reviewEntity(key: EntityKey, id: string, action: "approve"
 export async function createUploadUrl(): Promise<Result & { id?: string; url?: string }> {
   const s = await role(MEMBERS);
   if (!s) return denied();
-  const rl = await limit("upload", s.id);
+  // 60 photos / 10 min per user; not for administrators or RATE_LIMIT_ALLOW_IPS
+  const exempt = s.role === "admin" || ipAllowlisted(clientIp(await headers()));
+  const rl = exempt ? { ok: true, retryAfter: 0 } : await limit("upload", s.id);
   if (!rl.ok) return fail("rate", { min: Math.ceil(rl.retryAfter / 60) });
   try {
     return { ok: true, ...(await signedUpload(s.id)) };

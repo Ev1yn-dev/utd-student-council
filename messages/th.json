@@ -25,7 +25,8 @@
     "thName": "ภาษาไทย",
     "enName": "English",
     "schoolLogoAlt": "ตราโรงเรียนอุตรดิตถ์",
-    "councilLogoAlt": "ตราสภานักเรียนโรงเรียนอุตรดิตถ์"
+    "councilLogoAlt": "ตราสภานักเรียนโรงเรียนอุตรดิตถ์",
+    "voice": "ส่งเสียงถึงสภา"
   },
   "hero": {
     "label": "แบนเนอร์",
@@ -692,6 +693,12 @@
         "where": "upstash.com → หน้า Database → แท็บ REST API → UPSTASH_REDIS_REST_TOKEN (ใช้ Token ปกติ ไม่ใช่ Readonly Token)",
         "missingDev": "ใช้ตัวจำกัดในหน่วยความจำ",
         "missingProd": "เหมือนกรณีไม่มี URL"
+      },
+      "RATE_LIMIT_ALLOW_IPS": {
+        "purpose": "รายการ IP ที่ไม่ถูกจำกัดจำนวนคำขอของเว็บ (คั่นด้วยจุลภาค รองรับ IPv4/IPv6 และ CIDR เช่น 203.0.113.7,2001:db8::/48) — ยังผ่านการกันบอท การแบน และ Cloudflare ตามปกติ",
+        "where": "ล็อกอินเป็นผู้ดูแลระบบแล้วเปิด /api/admin/whoami ค่า ip คือ IP ที่เซิร์ฟเวอร์เห็น",
+        "missingDev": "ทุก IP ถูกจำกัดตามปกติ",
+        "missingProd": "ทุก IP ถูกจำกัดตามปกติ (ผู้ดูแลระบบที่ล็อกอินอยู่ไม่ถูกจำกัดอยู่แล้ว)"
       },
       "NEXT_PUBLIC_TURNSTILE_SITE_KEY": {
         "purpose": "คีย์สาธารณะของ Cloudflare Turnstile (กล่องยืนยันว่าไม่ใช่บอท) บนฟอร์มส่งเสียงถึงสภา",

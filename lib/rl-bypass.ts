@@ -1,19 +1,36 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { inRanges, isIp } from "./client-ip.ts";
 import { adminEmails, normalizeEmail } from "./env.ts"; // relative + extension: also loaded by plain Node in scripts/test-rate-limit.mts
 
-// Rate-limit bypass for administrators (ADMIN_EMAILS only). Issued by /auth/callback AFTER Supabase verified the
-// Google sign-in and the address matched ADMIN_EMAILS — never from anything the browser claims.
-// Cookie value: base64url(email).exp.HMAC-SHA256(APP_SECRET, "email|exp"); httpOnly, Secure, SameSite=Lax, 12 h.
-// The proxy honours it only for /auth/* and the admin pages, and only for the app's rate limits (bot blocks, bans,
-// CSP, Turnstile and Cloudflare stay in force). The address is re-checked against ADMIN_EMAILS on every use, so
-// removing it from the env var revokes the cookie at once.
+// Rate-limit bypass for administrators (ADMIN_EMAILS only). Issued by /auth/callback, or by the proxy on a back-office
+// page, only AFTER Supabase verified the session and the address matched ADMIN_EMAILS — never from anything the
+// browser claims. Cookie value: base64url(email).exp.HMAC-SHA256(APP_SECRET, "email|exp"); httpOnly, Secure,
+// SameSite=Lax, 12 h, path "/". It skips only the app's own rate limits, on every path (back office, /auth, /api,
+// the voice form); bot blocks, bans, the browser gate, CSP, Turnstile and Cloudflare stay in force. The address is
+// re-checked against ADMIN_EMAILS on every use, so removing it from the env var revokes the cookie at once.
+//
+// Second bypass: RATE_LIMIT_ALLOW_IPS (comma-separated IPv4 / IPv6 addresses or CIDR ranges), matched against the
+// real client IP from lib/client-ip.ts (cf-connecting-ip only when the request really came through Cloudflare).
 
 export const RL_BYPASS_COOKIE = "rl_bypass";
 export const RL_BYPASS_TTL_SEC = 12 * 3600;
-/** Cookie paths: the sign-in routes and the admin pages of each locale (cookies are not sent anywhere else). */
-export const RL_BYPASS_PATHS = ["/auth", "/th/admin", "/en/admin"];
-/** Paths where a valid cookie skips the app's rate limit. */
-export const RL_BYPASS_SCOPE = /^\/(auth\/|(th|en)\/admin(\/|$))/;
+/** Paths of cookies issued before the bypass covered the whole site; cleared on sign-out. */
+export const RL_BYPASS_OLD_PATHS = ["/auth", "/th/admin", "/en/admin"];
+
+/** Cookie options (path "/"); maxAge 0 clears it. */
+export const rlBypassCookie = (value: string, maxAge = RL_BYPASS_TTL_SEC, path = "/") =>
+  ({ name: RL_BYPASS_COOKIE, value, httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path, maxAge });
+
+/** RATE_LIMIT_ALLOW_IPS as a list of ranges (invalid entries are dropped). */
+export function allowedIpRanges(raw = process.env.RATE_LIMIT_ALLOW_IPS) {
+  return (raw ?? "").split(",").map((x) => x.trim()).filter((x) => {
+    const [base, bits, extra] = x.split("/");
+    return extra === undefined && isIp(base) && (bits === undefined || /^\d{1,3}$/.test(bits));
+  });
+}
+
+/** Whether the real client IP (lib/client-ip.ts) is in RATE_LIMIT_ALLOW_IPS. */
+export const ipAllowlisted = (ip: string, raw?: string) => ip !== "unknown" && inRanges(ip, allowedIpRanges(raw));
 
 function secret() {
   const s = process.env.APP_SECRET;

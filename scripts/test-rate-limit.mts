@@ -6,7 +6,7 @@ process.env.UPSTASH_REDIS_REST_URL = "";
 process.env.UPSTASH_REDIS_REST_TOKEN = "";
 process.env.APP_SECRET = "test-secret-0123456789abcdef";
 process.env.ADMIN_EMAILS = " Admin.One@gmail.com ";
-const { issueBypass, verifyBypass, RL_BYPASS_SCOPE, RL_BYPASS_TTL_SEC } = await import("../lib/rl-bypass.ts");
+const { issueBypass, verifyBypass, ipAllowlisted, RL_BYPASS_TTL_SEC } = await import("../lib/rl-bypass.ts");
 const { clientIp, isCloudflareIp } = await import("../lib/client-ip.ts");
 const { limit } = await import("../lib/ratelimit.ts");
 
@@ -31,8 +31,11 @@ process.env.ADMIN_EMAILS = "admin.one@gmail.com";
 process.env.APP_SECRET = "a-different-secret-xxxxxxxxxxxx";
 assert.equal(verifyBypass(good, now + 60), null, "signed with another secret");
 process.env.APP_SECRET = "test-secret-0123456789abcdef";
-for (const p of ["/auth/google", "/auth/callback", "/th/admin", "/en/admin/users"]) assert.ok(RL_BYPASS_SCOPE.test(p), p);
-for (const p of ["/th", "/api/token", "/th/dashboard", "/th/administrator", "/voice"]) assert.ok(!RL_BYPASS_SCOPE.test(p), p);
+// ── RATE_LIMIT_ALLOW_IPS ──
+const ALLOW = " 203.0.113.7, 198.51.100.0/24 ,2001:db8::/48, junk, 10.0.0.0/99 ";
+for (const ip of ["203.0.113.7", "198.51.100.200", "2001:db8:0:ffff::1"]) assert.ok(ipAllowlisted(ip, ALLOW), ip);
+for (const ip of ["203.0.113.8", "198.51.101.1", "2001:db9::1", "10.1.2.3", "unknown"]) assert.ok(!ipAllowlisted(ip, ALLOW), ip);
+assert.ok(!ipAllowlisted("203.0.113.7", ""), "empty list");
 
 // ── real client IP ──
 const H = (o: Record<string, string>) => ({ get: (k: string) => o[k.toLowerCase()] ?? null });

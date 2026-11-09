@@ -1,11 +1,12 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
 import { headers } from "next/headers";
-import { decideAccess, normalizeEmail, supabaseConfigured, type Access, type AllowedRow } from "@/lib/env";
+import { decideAccess, googleVerified, normalizeEmail, supabaseConfigured, type Access, type AllowedRow } from "@/lib/env";
 import { clientIp, hashIp } from "@/lib/security";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+
+export { googleVerified };
 
 export type Role = "council" | "teacher" | "admin";
 export type Session = { id: string; email: string; role: Role | null };
@@ -35,10 +36,6 @@ export async function resolveAccess(id: string, email: string, verified: boolean
   return access;
 }
 
-/** Google's own "email verified" claim (Supabase keeps it in user_metadata and in the identity data). */
-export function googleVerified(u: User) {
-  return u.user_metadata?.email_verified === true || !!u.identities?.some((i) => i.provider === "google" && i.identity_data?.email_verified === true);
-}
 
 /** Verified session (token validated by the Auth server) + sign-in rule re-check + role. null = not logged in / not allowed. */
 export async function getSession(): Promise<Session | null> {

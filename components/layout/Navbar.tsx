@@ -1,11 +1,13 @@
 "use client";
 
+import { MessageSquareText } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { MobileDock } from "@/components/layout/MobileDock";
 import { ChannelLinks } from "@/components/ui/ChannelLinks";
+import { cn } from "@/lib/utils";
 
 /** Emblem in the header: transparent AVIF (WebP / PNG fallback), fixed box so nothing shifts while it loads. */
 function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt: string; delay: number; className?: string }) {
@@ -29,6 +31,7 @@ function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
+  const onVoice = usePathname() === "/voice";
   return (
     // no overflow-hidden here: the language menu / phone rail drop below the header; only the glow is clipped
     <header className="relative z-30 bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
@@ -49,6 +52,17 @@ export function Navbar() {
         </Link>
 
         <div className="hidden shrink-0 items-center gap-2 md:flex">
+          <Link
+            href="/voice"
+            aria-current={onVoice ? "page" : undefined}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-full border px-3 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-pink-400/70 hover:shadow-glow",
+              onVoice ? "border-pink-400/70 bg-pink-soft text-pink-ink" : "border-white/20 bg-white/5 hover:bg-white/10",
+            )}
+          >
+            <MessageSquareText size={17} strokeWidth={1.75} aria-hidden />
+            <span>{t("header.voice")}</span>
+          </Link>
           <ChannelLinks />
           <LocaleSwitch />
         </div>

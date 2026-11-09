@@ -32,6 +32,15 @@ export type AllowedRow = { role: string; active: boolean } | null;
  *   4. other address on ALLOWED_EMAIL_DOMAIN                    -> pending (signed in, no back office: /pending-access)
  *   5. anything else                                            -> denied
  */
+/** Google's own "email verified" claim (Supabase keeps it in user_metadata and in the identity data). */
+export function googleVerified(u: { user_metadata?: { email_verified?: unknown }; identities?: { provider: string; identity_data?: { email_verified?: unknown } }[] }) {
+  return u.user_metadata?.email_verified === true || !!u.identities?.some((i) => i.provider === "google" && i.identity_data?.email_verified === true);
+}
+
+/** Whether a verified Supabase user is an administrator (ADMIN_EMAILS; same rule as decideAccess). */
+export const isAdminUser = (u: { email?: string; email_confirmed_at?: string | null } & Parameters<typeof googleVerified>[0]) =>
+  !!u.email_confirmed_at && decideAccess(u.email, googleVerified(u), null) === "admin";
+
 export function decideAccess(email: string | null | undefined, googleVerified: boolean, allowed: AllowedRow): Access {
   const e = normalizeEmail(email);
   if (!googleVerified || e.split("@").length !== 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return "denied";

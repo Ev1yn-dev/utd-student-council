@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { audit, googleVerified, resolveAccess, syncProfile } from "@/lib/auth";
 import { normalizeEmail } from "@/lib/env";
 import { SITE_URL } from "@/lib/site";
-import { RL_BYPASS_COOKIE, RL_BYPASS_PATHS, RL_BYPASS_TTL_SEC, issueBypass } from "@/lib/rl-bypass";
+import { RL_BYPASS_TTL_SEC, issueBypass, rlBypassCookie } from "@/lib/rl-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -31,13 +31,11 @@ export async function GET(req: NextRequest) {
   // ip hash + user agent are added by audit() (shared accounts are used by several people)
   await audit({ id: user.id, email }, "login", undefined, undefined, { access });
   const res = NextResponse.redirect(`${origin}${access === "pending" ? "/pending-access" : "/dashboard"}`);
-  // administrators (ADMIN_EMAILS, verified just above by Supabase + Google): signed cookie that lets /auth/* and the
-  // admin pages past the app's rate limit for 12 h (lib/rl-bypass.ts)
+  // administrators (ADMIN_EMAILS, verified just above by Supabase + Google): signed cookie that skips the app's own
+  // rate limits on every path for 12 h (lib/rl-bypass.ts)
   const bypass = access === "admin" ? issueBypass(email) : null;
   if (bypass) {
-    for (const path of RL_BYPASS_PATHS) {
-      res.cookies.set(RL_BYPASS_COOKIE, bypass, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path, maxAge: RL_BYPASS_TTL_SEC });
-    }
+    res.cookies.set(rlBypassCookie(bypass));
     await audit({ id: user.id, email }, "rl_bypass:issue", undefined, undefined, { ttl_h: RL_BYPASS_TTL_SEC / 3600 });
   }
   return res;

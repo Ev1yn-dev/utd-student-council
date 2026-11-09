@@ -1,11 +1,13 @@
 "use client";
 
+import { MessageSquareText } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLocaleSwitch } from "@/components/i18n/LocaleProvider";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { CHANNELS } from "@/lib/contact";
 import { cn } from "@/lib/utils";
@@ -16,8 +18,8 @@ const ICON: Record<Key, IconName> = { language: "globe", instagram: "instagram",
 const SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
 /**
- * Phones (< md): the menu button opens a vertical rail of 44 px round icons under it, right-aligned:
- * language → Instagram → Facebook → TikTok. Tapping an icon stretches it into a capsule with its text
+ * Phones (< md): the menu button opens a vertical rail under it, right-aligned: the "voice to the council" link
+ * (always a capsule with its text), then 44 px round icons: language → Instagram → Facebook → TikTok. Tapping an icon stretches it into a capsule with its text
  * (one at a time; tapping again closes it). The capsule grows with a layout (transform) animation, so only the
  * compositor works. Closes on outside tap, Esc, scroll and page change. Reduced motion: no animation.
  */
@@ -30,7 +32,8 @@ export function MobileDock() {
   const [active, setActive] = useState<Key | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const firstItem = useRef<HTMLButtonElement>(null);
+  const firstItem = useRef<HTMLAnchorElement>(null);
+  const onVoice = /^\/(th|en)\/voice\/?$/.test(pathname);
 
   const close = (focusButton = false) => {
     setOpen(false);
@@ -121,7 +124,26 @@ export function MobileDock() {
             exit="hidden"
             variants={{ shown: { transition: reduce ? {} : { staggerChildren: 0.045 } }, hidden: { transition: reduce ? {} : { staggerChildren: 0.03, staggerDirection: -1 } } }}
           >
-            {ORDER.map((k, i) => {
+            <motion.li
+              className="flex max-w-full justify-end"
+              variants={{ hidden: { opacity: 0, y: -10, scale: 0.85 }, shown: { opacity: 1, y: 0, scale: 1 } }}
+              transition={reduce ? { duration: 0 } : SPRING}
+            >
+              <Link
+                ref={firstItem}
+                href="/voice"
+                aria-current={onVoice ? "page" : undefined}
+                onClick={() => close()}
+                className={cn(
+                  "flex h-11 items-center gap-2 rounded-full border pl-4 pr-3 text-sm font-semibold shadow-[0_10px_24px_-10px_rgb(5_13_36/0.7)] backdrop-blur-md",
+                  onVoice ? "border-pink-400/70 bg-pink-soft text-pink-ink" : "border-white/20 bg-brand-deep/95 text-on-brand",
+                )}
+              >
+                <span>{t("header.voice")}</span>
+                <span className="grid h-8 w-8 place-items-center"><MessageSquareText size={20} strokeWidth={1.75} aria-hidden /></span>
+              </Link>
+            </motion.li>
+            {ORDER.map((k) => {
               const isOpen = active === k;
               const c = channel(k);
               return (
@@ -139,7 +161,6 @@ export function MobileDock() {
                   >
                     <motion.button
                       layout={!reduce ? "position" : false}
-                      ref={i === 0 ? firstItem : undefined}
                       type="button"
                       onClick={() => toggle(k)}
                       aria-expanded={isOpen}
