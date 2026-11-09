@@ -46,7 +46,7 @@ export function ScrollTop() {
         >
           <svg aria-hidden width="52" height="52" viewBox="0 0 52 52" className="absolute inset-0 -rotate-90">
             <circle cx="26" cy="26" r={R} fill="none" stroke="rgb(255 255 255 / 0.15)" strokeWidth="3" />
-            <circle cx="26" cy="26" r={R} fill="none" stroke="var(--c-pink)" strokeWidth="3" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} className="transition-[stroke-dashoffset] duration-200" />
+            <circle cx="26" cy="26" r={R} fill="none" stroke="var(--c-pink)" strokeWidth="3" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} />
           </svg>
           <IconArrowUp width={20} height={20} className="relative" />
         </button>

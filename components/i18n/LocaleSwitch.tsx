@@ -78,7 +78,7 @@ export function LocaleSwitch({ variant = "button", compact, className }: { varia
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        aria-label={t("button", { current: t(locale) })}
+        aria-label={`${locale.toUpperCase()} – ${t("button", { current: t(locale) })}`}
         disabled={switching}
         onClick={() => { setActive(Math.max(0, locales.indexOf(locale))); setOpen((o) => !o); }}
         onKeyDown={(e) => {

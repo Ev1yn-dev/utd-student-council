@@ -27,8 +27,9 @@ export function Footer() {
       <div data-swap className="relative mx-auto max-w-[1320px] px-4 pb-24 pt-9 text-[0.88rem] md:pb-9">
         <div className="flex flex-col items-center gap-5 text-center md:flex-row md:items-start md:gap-7 md:text-left">
           <picture className="shrink-0">
-            <source type="image/avif" srcSet="/brand/logo-council-128.avif 1x, /brand/logo-council-256.avif 2x" />
-            <img src="/brand/logo-council-128.png" srcSet="/brand/logo-council-128.webp 1x, /brand/logo-council-256.webp 2x" alt={t("footer.school.logoAlt")} width={88} height={88} className="h-[88px] w-[88px] object-contain" loading="lazy" decoding="async" />
+            {/* 88 CSS px: 128w at DPR 1, 176w up to DPR 2 */}
+            <source type="image/avif" srcSet="/brand/logo-council-128.avif 128w, /brand/logo-council-176.avif 176w" sizes="88px" />
+            <img src="/brand/logo-council-128.png" srcSet="/brand/logo-council-128.webp 128w, /brand/logo-council-176.webp 176w" sizes="88px" alt={t("footer.school.logoAlt")} width={88} height={88} className="h-[88px] w-[88px] object-contain" loading="lazy" decoding="async" />
           </picture>
           <div className="min-w-0 space-y-3">
             <p className="font-display text-lg font-semibold leading-snug">{t("footer.school.council")}</p>

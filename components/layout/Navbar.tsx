@@ -8,8 +8,10 @@ import { MobileDock } from "@/components/layout/MobileDock";
 import { ChannelLinks } from "@/components/ui/ChannelLinks";
 import { cn } from "@/lib/utils";
 
+const LOGO_SIZES = "(min-width: 768px) 54px, (min-width: 640px) 44px, 36px";
+
 /** Emblem in the header: transparent AVIF (WebP / PNG fallback), fixed box so nothing shifts while it loads. */
-function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt: string; delay: number; className?: string }) {
+function Logo({ name, alt, delay, className, lazy }: { name: "school" | "council"; alt: string; delay: number; className?: string; lazy?: boolean }) {
   // CSS pop-in (globals.css .logo-pop): painted with the first frame, no JS needed
   return (
     <span
@@ -17,8 +19,8 @@ function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt
       className={`logo-pop no-select block h-9 w-9 shrink-0 sm:h-11 sm:w-11 md:h-[54px] md:w-[54px] ${className ?? ""}`}
     >
       <picture>
-        <source type="image/avif" srcSet={`/brand/logo-${name}-128.avif 128w, /brand/logo-${name}-256.avif 256w`} sizes="54px" />
-        <img src={`/brand/logo-${name}-128.png`} srcSet={`/brand/logo-${name}-128.webp 128w, /brand/logo-${name}-256.webp 256w`} sizes="54px" alt={alt} width={54} height={54} className="h-full w-full object-contain" draggable={false} />
+        <source type="image/avif" srcSet={`/brand/logo-${name}-128.avif 128w, /brand/logo-${name}-256.avif 256w`} sizes={LOGO_SIZES} />
+        <img src={`/brand/logo-${name}-128.png`} srcSet={`/brand/logo-${name}-128.webp 128w, /brand/logo-${name}-256.webp 256w`} sizes={LOGO_SIZES} alt={alt} width={54} height={54} loading={lazy ? "lazy" : undefined} className="h-full w-full object-contain" draggable={false} />
       </picture>
     </span>
   );
@@ -37,9 +39,14 @@ export function Navbar() {
     <header className="relative z-30 bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
       <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden"><span className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" /></span>
       <nav aria-label={t("header.nav")} className="relative mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-3 md:py-4">
-        <Link href="/" className="flex min-w-0 items-center gap-2.5 md:gap-3" aria-label={t("header.home", { name: t("site.name") })}>
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2.5 md:gap-3"
+          aria-label={t("header.home", { name: `${t("site.name")} ${locale === "th" ? t("site.nameEn") : t("site.nameTh")}` })}
+        >
           <Logo name="school" alt={t("header.schoolLogoAlt")} delay={0.05} />
-          <Logo name="council" alt={t("header.councilLogoAlt")} delay={0.15} className="max-sm:hidden" />
+          {/* hidden on phones: lazy, so a phone never downloads it */}
+          <Logo name="council" alt={t("header.councilLogoAlt")} delay={0.15} className="max-sm:hidden" lazy />
           <span data-swap className="ml-1 min-w-0">
             <Name className="line-clamp-2 block font-display text-[0.85rem] font-semibold leading-tight sm:truncate sm:text-[1.1rem] sm:leading-snug md:text-[1.35rem]">
               {t("site.name")}

@@ -1,6 +1,4 @@
-import { preload } from "react-dom";
 import { HeroSlides } from "@/components/sections/HeroSlides";
-import { HERO_SIZES } from "@/components/sections/hero-sizes";
 import { getHeroPhotos } from "@/lib/content";
 
 /**
@@ -11,9 +9,6 @@ import { getHeroPhotos } from "@/lib/content";
  */
 export async function Hero() {
   const photos = await getHeroPhotos();
-  // LCP: the first slide is fetched from the <head>, before the CSS and the scripts (AVIF when the slide has one)
-  const first = photos[0];
-  if (first) preload(first.src, { as: "image", fetchPriority: "high", imageSrcSet: first.avifSet ?? first.srcSet, imageSizes: HERO_SIZES, ...(first.avifSet ? { type: "image/avif" } : {}) });
   return (
     <div className="mx-auto max-w-[1320px] px-4 pt-4 md:pt-7">
       <HeroSlides photos={photos}>

@@ -20,6 +20,12 @@
     "security:check": "node scripts/security-check.mjs",
     "test:rl": "node --no-warnings scripts/test-rate-limit.mts"
   },
+  "browserslist": [
+    "chrome 111",
+    "edge 111",
+    "firefox 111",
+    "safari 16.4"
+  ],
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.12.7",

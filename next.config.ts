@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
   // share images rendered on request (policy pages) read the Thai font and the emblem from disk
   outputFileTracingIncludes: { "/**/opengraph-image*": ["./assets/fonts/*.ttf", "./public/brand/logo-council-256.png"] },
   reactStrictMode: true,
+  // Tailwind CSS is small (~16 KB gz): inlined in <head> instead of a render-blocking <link> (first view)
+  experimental: { inlineCss: true },
   async redirects() {
     // v2 single page: old section routes -> matching tab (with or without a locale prefix; proxy.ts adds the prefix)
     const old: [string, string][] = [
@@ -50,18 +52,29 @@ const nextConfig: NextConfig = {
       { key: "CDN-Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
       { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
+    // 1 year, immutable: a changed file must get a new name (banner-02-1 -> banner-03-1, logo-council-176 ...),
+    // never new content under an old name. /_next/static is already immutable (hashed names).
     const files = [
-      // 30 days: a changed file gets a new name (banner-02-1 -> banner-03-1), never new content under an old name
-      { key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=31536000" },
+      { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
       { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
+    // app/icon.png, app/apple-icon.png are linked with a content hash (?abc123); favicon.ico rarely changes
+    const icons = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
     return [
       { source: "/:path*", headers: securityHeaders },
       ...["/:locale(th|en)", "/:locale(th|en)/voice", "/:locale(th|en)/policies/:slug", "/:locale(th|en)/home/:year/:tab"].map((source) => ({ source, headers: cdn })),
       ...["/banners/:file*", "/banner/:file*", "/brand/:file*", "/credits/:file*", "/illustrations/:file*", "/flags/:file*"].map((source) => ({ source, headers: files })),
+      ...["/icon.png", "/apple-icon.png", "/favicon.ico"].map((source) => ({ source, headers: icons })),
+      { source: "/manifest.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
     ];
   },
   turbopack: {
+    // Next's built-in polyfills for features every supported browser already has (Lighthouse "legacy JavaScript"):
+    // replaced by lib/polyfill-module.js, which keeps only URL.canParse
+    resolveAlias: {
+      "next/dist/build/polyfills/polyfill-module": "./lib/polyfill-module.js",
+      "../build/polyfills/polyfill-module": { browser: "./lib/polyfill-module.js" },
+    },
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

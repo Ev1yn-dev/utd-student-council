@@ -155,13 +155,17 @@ h1, h2, h3, h4 {
   outline-offset: 3px;
 }
 
-/* skeleton shimmer while an image loads */
+/* skeleton shimmer while an image loads: the highlight is a pseudo-element moved with transform (composited) */
 @keyframes shimmer {
-  to { background-position: -200% 0; }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
 }
-.skeleton {
-  background: linear-gradient(100deg, var(--c-surface-2) 30%, var(--c-sky) 50%, var(--c-surface-2) 70%);
-  background-size: 200% 100%;
+.skeleton { background: var(--c-surface-2); }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, var(--c-sky) 50%, transparent 70%);
   animation: shimmer 1.4s linear infinite;
 }
 
@@ -213,19 +217,24 @@ h1, h2, h3, h4 {
 }
 
 /* Council department heading rule: blue -> pink gradient drifting slowly back and forth (CSS only). */
-.dept-rule {
+/* the gradient is a 3x-wide pseudo-element slid with transform (composited), same drift as a 300% background */
+.dept-rule { position: relative; overflow: hidden; }
+.dept-rule::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 300%;
   background-image: linear-gradient(90deg, var(--c-brand-mid), var(--c-pink), var(--c-brand-mid), var(--c-pink));
-  background-size: 300% 100%;
   animation: dept-rule 7s ease-in-out infinite alternate;
 }
 @keyframes dept-rule {
-  from { background-position: 0% 50%; }
-  to { background-position: 100% 50%; }
+  from { transform: translateX(0); }
+  to { transform: translateX(-66.6667%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .dept-rule { animation: none !important; }
+  .dept-rule::before, .skeleton::after { animation: none !important; }
   .petal { display: none; }
   .gold-shimmer::after { display: none; }
   body::before { animation: none; }

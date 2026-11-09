@@ -33,8 +33,9 @@ function csp(nonce: string) {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}'`,
-    "style-src-attr 'unsafe-inline'", // inline style="" from animation libs; scripts stay nonce-locked
+    // next.config.ts experimental.inlineCss puts the site CSS in a <style> without a nonce: styles are allowed inline,
+    // scripts stay nonce-locked (no user HTML is ever rendered, so this only concerns our own CSS)
+    "style-src 'self' 'unsafe-inline'",
     ...COMMON,
   ].join("; ");
 }

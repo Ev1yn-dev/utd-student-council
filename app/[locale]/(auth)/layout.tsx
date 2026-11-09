@@ -15,8 +15,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <div className="relative w-full max-w-md space-y-6 rounded-[24px] border border-white/15 bg-surface p-8 text-ink shadow-soft">
         <Link href="/" className="flex items-center gap-3" aria-label={t("auth.back")}>
           <picture className="shrink-0">
-            <source type="image/avif" srcSet="/brand/logo-council-128.avif 1x, /brand/logo-council-256.avif 2x" />
-            <img src="/brand/logo-council-128.png" srcSet="/brand/logo-council-128.webp 1x, /brand/logo-council-256.webp 2x" alt={t("header.councilLogoAlt")} width={44} height={44} className="no-select h-11 w-11 object-contain" />
+            <source type="image/avif" srcSet="/brand/logo-council-128.avif 128w, /brand/logo-council-176.avif 176w" sizes="44px" />
+            <img src="/brand/logo-council-128.png" srcSet="/brand/logo-council-128.webp 128w, /brand/logo-council-176.webp 176w" sizes="44px" alt={t("header.councilLogoAlt")} width={44} height={44} className="no-select h-11 w-11 object-contain" />
           </picture>
           <span className="font-display text-lg font-semibold text-strong">{t("site.name")}</span>
         </Link>

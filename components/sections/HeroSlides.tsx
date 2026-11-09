@@ -2,9 +2,11 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import type { Photo } from "@/lib/content";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons/Icon";
 import { HERO_SIZES } from "@/components/sections/hero-sizes";
+import { afterLoad } from "@/lib/gate-client";
 import { cn } from "@/lib/utils";
 
 /** prefers-reduced-motion, read after hydration (no motion library on the first view). */
@@ -48,6 +50,9 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const n = photos.length;
+  // the other slides' photos are fetched only once the page has loaded (first view = the first photo only)
+  const [armed, setArmed] = useState(false);
+  useEffect(() => afterLoad(() => setArmed(true)), []);
   const paused = hover || focused || dx !== null || !!reduce;
 
   useEffect(() => {
@@ -98,6 +103,13 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     setDx(null); // snap (transition back on)
   };
 
+  // LCP: the first slide is requested from the <head> (server render of this client component = HTML only; a
+  // server-component preload() would also fire on every page that merely prefetches "/")
+  const first = photos[0];
+  if (first) {
+    preload(first.src, { as: "image", fetchPriority: "high", imageSrcSet: first.avifSet ?? first.srcSet, imageSizes: HERO_SIZES, ...(first.avifSet ? { type: "image/avif" } : {}) });
+  }
+
   const altOf = (ph: Photo) => (ph.alt ? (locale === "en" && ph.alt.en ? ph.alt.en : ph.alt.th) : ph.caption || t("alt"));
   const p = photos[i];
 
@@ -146,6 +158,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               style={{ backgroundImage: ph.blur ? `url(${ph.blur})` : undefined, backgroundSize: "cover", backgroundPosition: ph.focal ?? "50% 50%" }}
             >
               {/* fills its slide, cropped around the focal point; Ken Burns drift on the current slide only */}
+              {(k === 0 || armed) && (
               <picture className="contents">
                 {ph.avifSet && <source type="image/avif" srcSet={ph.avifSet} sizes={HERO_SIZES} />}
                 <img
@@ -167,6 +180,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                   }}
                 />
               </picture>
+              )}
             </div>
           ))}
         </div>
@@ -206,7 +220,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     {/* under the frame (nothing is drawn over banner artwork): slide dots + credit; fixed height = no layout shift */}
     <div className="mt-2 flex h-5 items-center justify-between gap-3">
       {n > 1 ? (
-        <div className="flex" role="group" aria-label={t("pick")}>
+        <div className="flex px-1" role="group" aria-label={t("pick")}>
           {photos.map((ph, k) => (
             <button
               key={ph.id}
@@ -214,9 +228,18 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               aria-label={t("slide", { n: k + 1 })}
               aria-current={k === i}
               onClick={() => setI(k)}
-              className="-my-0.5 grid h-6 min-w-6 place-items-center"
+              className="group/dot -my-0.5 grid h-6 min-w-6 place-items-center"
             >
-              <span className={cn("block h-2 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2 bg-brand/25 hover:bg-brand/50")} />
+              {/* composited only: the dot fades out and the glowing pill grows in (opacity / transform) */}
+              <span className="relative block h-2 w-2">
+                <span className={cn("absolute inset-0 rounded-full bg-brand/25 transition-opacity duration-500 group-hover/dot:bg-brand/50", k === i ? "opacity-0" : "opacity-100")} />
+                <span
+                  className={cn(
+                    "absolute left-1/2 top-0 h-2 w-8 -translate-x-1/2 rounded-full bg-pink shadow-glow transition-[opacity,transform] duration-500",
+                    k === i ? "scale-x-100 opacity-100" : "scale-x-25 opacity-0",
+                  )}
+                />
+              </span>
             </button>
           ))}
         </div>

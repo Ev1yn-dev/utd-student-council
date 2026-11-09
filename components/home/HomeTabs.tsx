@@ -9,6 +9,7 @@ import { Illustration } from "@/components/icons/Illustration";
 import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/icons/Icon";
 import { useLocale, useTranslations } from "next-intl";
 import { TAB_KEYS, filterContent, homeHref, tabCount, type TabKey } from "@/lib/search";
+import { afterLoad } from "@/lib/gate-client";
 import { ceYear, cn } from "@/lib/utils";
 
 const TAB_ICON: Record<TabKey, typeof IconUsers> = { news: IconMegaphone, policy: IconFlag, council: IconUsers, advisor: IconTeacher };
@@ -48,11 +49,18 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
     return () => io.disconnect();
   }, []);
 
-  // phones: keep the active tab visible in the horizontally scrolling tab list (scrolls the list only)
+  // phones: keep the active tab visible in the horizontally scrolling tab list (scrolls the list only). The first run
+  // waits for load + idle: reading layout during hydration would force a synchronous reflow on the first view.
+  const tabsScrolled = useRef(false);
   useEffect(() => {
-    const list = tabsEl.current;
-    const b = list?.querySelector<HTMLElement>(`#tab-${tab}`);
-    if (list && b) list.scrollTo({ left: b.offsetLeft - (list.clientWidth - b.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    const center = () => {
+      const list = tabsEl.current;
+      const b = list?.querySelector<HTMLElement>(`#tab-${tab}`);
+      if (list && b) list.scrollTo({ left: b.offsetLeft - (list.clientWidth - b.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    };
+    if (tabsScrolled.current) return center();
+    tabsScrolled.current = true;
+    return afterLoad(center);
   }, [tab, reduce, locale]);
 
   // Hold the panel's height while one tab/year leaves and the next enters, so the page below never jumps.
