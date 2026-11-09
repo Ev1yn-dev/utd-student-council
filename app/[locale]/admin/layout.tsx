@@ -1,3 +1,4 @@
+import { AllMessages } from "@/components/i18n/AllMessages";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminNav, type NavItem } from "@/components/admin/AdminNav";
@@ -35,6 +36,7 @@ export default async function AdminLayout({ children, params }: { children: Reac
   ];
 
   return (
+    <AllMessages>
     <div className="min-h-dvh bg-page lg:grid lg:grid-cols-[248px_1fr]">
       <AdminNav
         primary={primary}
@@ -47,5 +49,6 @@ export default async function AdminLayout({ children, params }: { children: Reac
       <main className="min-w-0 px-4 pb-28 pt-5 md:px-8 lg:py-8">{children}</main>
       <Toaster />
     </div>
+    </AllMessages>
   );
 }

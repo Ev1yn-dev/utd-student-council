@@ -30,7 +30,7 @@ function Progress({ value }: { value: number }) {
 export function PolicyTab({ policies, query, onClear }: { policies: Policy[]; query: string; onClear: () => void }) {
   const t = useTranslations("policy");
   const pick = useL();
-  if (policies.length === 0) return <ul className="grid"><EmptyState query={query} onClear={onClear} kind="policy" /></ul>;
+  if (policies.length === 0) return <div className="grid"><EmptyState query={query} onClear={onClear} kind="policy" /></div>;
   return (
     <section aria-labelledby="pol-h">
       <ZoneTitle icon={<IconFlag width={18} height={18} />} count={policies.length}><span id="pol-h">{t("heading")}</span></ZoneTitle>

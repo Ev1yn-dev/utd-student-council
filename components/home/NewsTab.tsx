@@ -38,7 +38,7 @@ export function NewsTab({ announcements, activities, query, onClear }: {
   const act = activities.find((a) => a.id === actId) ?? null;
 
   if (announcements.length === 0 && activities.length === 0) {
-    return <ul className="grid"><EmptyState query={query} onClear={onClear} kind="news" /></ul>;
+    return <div className="grid"><EmptyState query={query} onClear={onClear} kind="news" /></div>;
   }
 
   return (

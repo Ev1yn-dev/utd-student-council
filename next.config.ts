@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   // build/deploy date for the footer's "last updated" line (inlined at build time)
   env: { BUILD_DATE: new Date().toISOString() },
   productionBrowserSourceMaps: false,
+  // share images rendered on request (policy pages) read the Thai font and the emblem from disk
+  outputFileTracingIncludes: { "/**/opengraph-image*": ["./assets/fonts/*.ttf", "./public/brand/logo-council-256.png"] },
   reactStrictMode: true,
   async redirects() {
     // v2 single page: old section routes -> matching tab (with or without a locale prefix; proxy.ts adds the prefix)

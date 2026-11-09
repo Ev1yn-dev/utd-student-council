@@ -27,6 +27,8 @@ export type TimelineStep = { date: string; text: L };
 export type Policy = {
   id: string; slug: string; title: L; summary: L; body: L<string[]>; status: PolicyStatus; progress: number;
   owner: L; timeline: TimelineStep[]; cover: Img | null; photos: Img[];
+  /** row dates (ISO) for search: sitemap lastModified, Article datePublished / dateModified; null in the seed data */
+  createdAt: string | null; updatedAt: string | null;
 };
 export type Contact = { instagram: string | null; contact: string | null };
 export type Member = {
@@ -103,6 +105,7 @@ const toPolicy = (r: Row): Policy => ({
     .filter((t): t is { date: string; text: string; text_en?: string } => typeof t?.date === "string" && typeof t?.text === "string")
     .map((t) => ({ date: t.date, text: l(t.text, t.text_en) })),
   cover: toImg(one(r.cover as PhotoRow | PhotoRow[] | null)), photos: sortedImgs(r.photos as PhotoRow[] | null),
+  createdAt: (r.created_at as string | null) ?? null, updatedAt: (r.updated_at as string | null) ?? null,
 });
 /**
  * A member's photos are shown only with consent_photo = true (null = not asked yet). Poster files (photo_key) are in
@@ -175,7 +178,7 @@ function fromSeed(year: number): Lists {
 
 const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
 const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
-const POL = `id,year,slug,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
+const POL = `id,year,slug,created_at,updated_at,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
 const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,council_role,dept_key,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
 const ADV = `id,name,name_en,nickname,nickname_en,role_label,role_label_en,subject_group,subject_group_en,position,position_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
 
@@ -225,9 +228,28 @@ export async function getPolicyBySlug(slug: string): Promise<(Policy & { year: n
 }
 
 export async function getPolicySlugs(): Promise<string[]> {
-  if (!supabaseConfigured()) return seed.policies.map((p) => p.slug);
-  const { data } = await publicClient().from("policies").select("slug");
-  return (data ?? []).map((r) => r.slug);
+  return (await getPolicyDates()).map((p) => p.slug);
+}
+
+/** Every published policy's slug with its last change (sitemap). */
+export async function getPolicyDates(): Promise<{ slug: string; updatedAt: string | null }[]> {
+  if (!supabaseConfigured()) return seed.policies.map((p) => ({ slug: p.slug, updatedAt: null }));
+  const { data, error } = await publicClient().from("policies").select("slug,updated_at");
+  if (error) console.error("[content] policy dates", error.message);
+  return (data ?? []).map((r) => ({ slug: r.slug as string, updatedAt: (r.updated_at as string | null) ?? null }));
+}
+
+/** Latest change to anything shown on the home page (announcements, activities, policies), or null (sitemap). */
+export async function getContentUpdatedAt(): Promise<string | null> {
+  if (!supabaseConfigured()) return null;
+  const db = publicClient();
+  const latest = async (t: "announcements" | "activities" | "policies") => {
+    const { data, error } = await db.from(t).select("updated_at").order("updated_at", { ascending: false }).limit(1);
+    if (error) console.error(`[content] ${t} updated_at`, error.message);
+    return (data?.[0]?.updated_at as string | undefined) ?? null;
+  };
+  const dates = (await Promise.all([latest("announcements"), latest("activities"), latest("policies")])).filter((d): d is string => !!d);
+  return dates.sort().at(-1) ?? null;
 }
 
 // ───────────────────────── hero ─────────────────────────

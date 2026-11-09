@@ -1,12 +1,35 @@
 {
   "meta": {
-    "title": "Uttaradit School Student Council",
-    "description": "Uttaradit School Student Council — activities and news, policies, council members and teacher advisors",
-    "voiceTitle": "Voice to the Council",
-    "voiceDescription": "Send an idea or a complaint to the student council, never published, and track it with a reference code",
+    "voiceTitle": "Voice to the Council – Uttaradit Student Council",
+    "voiceDescription": "Send an idea, a problem or a complaint to the Uttaradit School Student Council. Messages are never published; track yours with a reference code.",
     "loginTitle": "Sign in",
     "pendingTitle": "Waiting for access",
-    "policyNotFound": "Policy not found"
+    "policyNotFound": "Policy not found",
+    "homeTitle": "Uttaradit School Student Council | UTDSC",
+    "homeDescription": "Uttaradit School Student Council, Thailand: council news, activities, policies, members and advisors, plus a form to send your voice to the council.",
+    "tabs": {
+      "news": {
+        "title": "Council News and Activities – Uttaradit School",
+        "description": "News, announcements and activity photos from the Uttaradit School Student Council, Uttaradit, Thailand."
+      },
+      "policy": {
+        "title": "Student Council Policies – Uttaradit School",
+        "description": "The Uttaradit School Student Council's policies, with the progress and timeline of each one."
+      },
+      "council": {
+        "title": "Student Council Members – Uttaradit School",
+        "description": "The members of the Uttaradit School Student Council by department and role."
+      },
+      "advisor": {
+        "title": "Teacher Advisors – Uttaradit School Student Council",
+        "description": "The teacher advisors of the Uttaradit School Student Council, Uttaradit, Thailand."
+      }
+    },
+    "policySuffix": "Student Council Policy",
+    "home": "Home",
+    "policies": "Policies",
+    "ogTagline": "Council news · Policies · Voice to the Council",
+    "orgName": "Uttaradit School Student Council"
   },
   "site": {
     "name": "Uttaradit School Student Council",
@@ -218,6 +241,7 @@
   "voice": {
     "title": "Voice to the Council",
     "sub": "Not shown to the public · messages are never published automatically",
+    "intro": "A direct line from Uttaradit School students to the student council: enter your student ID, pick a category and write your message. The council reads every message, and you can follow its status with the reference code you get after sending.",
     "privacy": "Your message is not shown to the public, but the student council sees the sender's name, grade, room and student ID to prevent inappropriate messages. This information stays within the student council.",
     "formTitle": "Voice to the Council",
     "formSub": "Tell us about a problem or an idea — the council reads every message.",
@@ -693,6 +717,18 @@
         "where": "upstash.com → database page → REST API tab → UPSTASH_REDIS_REST_TOKEN (the normal token, not the Readonly token)",
         "missingDev": "In-memory limiter",
         "missingProd": "Same as missing URL"
+      },
+      "GOOGLE_SITE_VERIFICATION": {
+        "purpose": "Google Search Console ownership by HTML tag (meta google-site-verification) — not needed once a Domain property is verified by DNS TXT",
+        "where": "Search Console → add a URL-prefix property → HTML tag method → copy only the content=\"...\" value",
+        "missingDev": "No verification tag",
+        "missingProd": "No verification tag (DNS verification works instead)"
+      },
+      "BING_SITE_VERIFICATION": {
+        "purpose": "Bing Webmaster Tools ownership by HTML tag (meta msvalidate.01)",
+        "where": "bing.com/webmasters → Add site → HTML Meta Tag → copy only the content=\"...\" value (or import from Google Search Console without it)",
+        "missingDev": "No verification tag",
+        "missingProd": "No verification tag (import from Google works instead)"
       },
       "RATE_LIMIT_ALLOW_IPS": {
         "purpose": "IPs exempt from the site's own rate limits (comma-separated, IPv4/IPv6 and CIDR, e.g. 203.0.113.7,2001:db8::/48) — bot blocks, bans and Cloudflare still apply",

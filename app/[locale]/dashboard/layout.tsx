@@ -1,3 +1,4 @@
+import { AllMessages } from "@/components/i18n/AllMessages";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DashNav } from "@/components/admin/DashNav";
@@ -30,6 +31,7 @@ export default async function DashboardLayout({ children, params }: { children: 
   ];
 
   return (
+    <AllMessages>
     <div className="min-h-dvh bg-page lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="bg-gradient-to-b from-brand-deep to-[#0b1f4d] text-on-brand lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:self-start lg:overflow-hidden">
         <div className="flex items-center justify-between gap-3 px-5 py-4 lg:block lg:space-y-4 lg:py-6">
@@ -52,5 +54,6 @@ export default async function DashboardLayout({ children, params }: { children: 
       <main className="min-w-0 px-4 py-6 md:px-8 md:py-8">{children}</main>
       <Toaster />
     </div>
+    </AllMessages>
   );
 }

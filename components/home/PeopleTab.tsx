@@ -43,11 +43,11 @@ export function PeopleTab({ kind, members, advisors, year, query, onClear }: {
         <span id={`${kind}-h`}>{t(kind === "council" ? "council" : "advisors")}</span>
       </ZoneTitle>
       {count === 0 ? (
-        <ul className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
           <AnimatePresence mode="popLayout">
             <EmptyState key="empty" query={query} onClear={onClear} kind={kind} />
           </AnimatePresence>
-        </ul>
+        </div>
       ) : kind === "council" ? (
         <Council members={members} searching={!!query.trim()} />
       ) : (

@@ -158,14 +158,19 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                 const active = t === tab;
                 const n = view.q ? tabCount(view, t) : null;
                 return (
-                  <button
+                  // a real link (crawlable, opens in a new tab with the modifier keys); a plain click switches in place
+                  <a
                     key={t}
                     id={`tab-${t}`}
-                    type="button"
+                    href={homeHref(locale, t, content.year, content.current)}
                     role="tab"
                     aria-selected={active}
                     aria-controls="tab-panel"
-                    onClick={() => selectTab(t)}
+                    onClick={(e) => {
+                      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                      e.preventDefault();
+                      selectTab(t);
+                    }}
                     className={cn(
                       "relative flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-[0.9rem] font-medium whitespace-nowrap transition-colors lg:flex-1 lg:px-2",
                       active ? "text-on-brand" : "text-muted hover:text-strong",
@@ -185,7 +190,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                     {n !== null && (
                       <span className={cn("relative rounded-full px-1.5 text-[0.7rem] font-semibold", active ? "bg-white/20" : n ? "bg-pink text-white" : "bg-line text-muted")}>{n}</span>
                     )}
-                  </button>
+                  </a>
                 );
               })}
               </LayoutGroup>

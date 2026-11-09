@@ -31,7 +31,10 @@ function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
-  const onVoice = usePathname() === "/voice";
+  const pathname = usePathname();
+  const onVoice = pathname === "/voice";
+  // the site name is the home page's one <h1> (same look: preflight resets heading styles); other pages have their own
+  const Name = pathname === "/" ? "h1" : "span";
   return (
     // no overflow-hidden here: the language menu / phone rail drop below the header; only the glow is clipped
     <header className="relative z-30 bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
@@ -41,9 +44,9 @@ export function Navbar() {
           <Logo name="school" alt={t("header.schoolLogoAlt")} delay={0.05} />
           <Logo name="council" alt={t("header.councilLogoAlt")} delay={0.15} className="max-sm:hidden" />
           <span data-swap className="ml-1 min-w-0">
-            <span className="line-clamp-2 block font-display text-[0.85rem] font-semibold leading-tight sm:truncate sm:text-[1.1rem] sm:leading-snug md:text-[1.35rem]">
+            <Name className="line-clamp-2 block font-display text-[0.85rem] font-semibold leading-tight sm:truncate sm:text-[1.1rem] sm:leading-snug md:text-[1.35rem]">
               {t("site.name")}
-            </span>
+            </Name>
             {/* second line = the other language's name */}
             <span lang={locale === "th" ? "en" : "th"} className="hidden truncate text-[0.7rem] tracking-[0.04em] text-on-brand/60 sm:block md:text-sm">
               {locale === "th" ? t("site.nameEn") : t("site.nameTh")}

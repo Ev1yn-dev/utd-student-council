@@ -18,7 +18,7 @@ const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
 const DYNAMIC = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login)(\/|$)|^\/(auth|api)(\/|$)/;
 // ...of which these need a session (role is checked again server-side in every page/action)
 const PRIVATE = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access)(\/|$)/;
-const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
+const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)|^\/api(\/|$)/;
 // Sign-in and back office only work on the primary domain (auth cookies, Google redirect URI).
 const PRIMARY_ONLY = /^(?:\/(?:th|en))?\/(login|admin|dashboard|pending-access)(\/|$)|^\/auth(\/|$)/;
 // Not pages: route handlers and files keep their unprefixed paths.
@@ -42,13 +42,14 @@ function csp(nonce: string) {
  */
 const PUBLIC_CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  // static.cloudflareinsights.com: Cloudflare Web Analytics beacon, injected into public pages by Cloudflare
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
 ].join("; ");
 const COMMON = [
   `img-src 'self' blob: data: ${SB_ORIGIN}`,
   "font-src 'self'",
-  `connect-src 'self' ${SB_ORIGIN} https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' ${SB_ORIGIN} https://challenges.cloudflare.com https://cloudflareinsights.com${isDev ? " ws: wss:" : ""}`,
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",

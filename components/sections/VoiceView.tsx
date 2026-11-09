@@ -11,6 +11,7 @@ export function VoiceView() {
       <header data-swap className="mb-6">
         <h1 className="text-2xl font-semibold text-strong md:text-3xl">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted">{t("sub")}</p>
+        <p className="mt-2 max-w-3xl text-sm text-muted">{t("intro")}</p>
       </header>
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-2">
         <VoiceForm />

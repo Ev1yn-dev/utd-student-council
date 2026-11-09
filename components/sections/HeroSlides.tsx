@@ -143,7 +143,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                   width={ph.w}
                   height={ph.h}
                   draggable={false}
-                  fetchPriority={k === 0 ? "high" : "auto"}
+                  fetchPriority={k === 0 ? "high" : "low"}
                   loading={k === 0 ? "eager" : "lazy"}
                   className="no-select pointer-events-none absolute inset-0 h-full w-full object-cover"
                   style={{ objectPosition: ph.focal ?? "50% 50%", transformOrigin: ORIGINS[k % ORIGINS.length] }}
@@ -191,7 +191,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     {/* under the frame (nothing is drawn over banner artwork): slide dots + credit; fixed height = no layout shift */}
     <div className="mt-2 flex h-5 items-center justify-between gap-3">
       {n > 1 ? (
-        <div className="flex gap-2" role="group" aria-label={t("pick")}>
+        <div className="flex" role="group" aria-label={t("pick")}>
           {photos.map((ph, k) => (
             <button
               key={ph.id}
@@ -199,7 +199,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               aria-label={t("slide", { n: k + 1 })}
               aria-current={k === i}
               onClick={() => setI(k)}
-              className="grid h-5 place-items-center"
+              className="-my-0.5 grid h-6 min-w-6 place-items-center"
             >
               <span className={cn("block h-2 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2 bg-brand/25 hover:bg-brand/50")} />
             </button>
