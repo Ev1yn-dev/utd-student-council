@@ -37,7 +37,6 @@ export const ENV_VARS: EnvVar[] = [
   { name: "NEXT_PUBLIC_TURNSTILE_SITE_KEY", need: "required", public: true, url: "https://dash.cloudflare.com/?to=/:account/turnstile", isTest: (v) => TURNSTILE_TEST_SITE.test(v) },
   { name: "TURNSTILE_SECRET_KEY", need: "required", public: false, url: "https://dash.cloudflare.com/?to=/:account/turnstile", isTest: (v) => TURNSTILE_TEST_SECRET.test(v) },
   { name: "ALLOWED_EMAIL_DOMAIN", need: "optional", public: false, url: "https://admin.google.com/", fallback: "utd.ac.th" },
-  { name: "COUNCIL_EMAILS", need: "optional", public: false, url: "https://admin.google.com/" },
   { name: "ADMIN_EMAILS", need: "required", public: false, url: "https://supabase.com/dashboard/project/_/auth/users", isTest: (v) => /example\.com/.test(v) },
 ];
 

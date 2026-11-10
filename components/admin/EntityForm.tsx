@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { reviewEntity, saveEntity, type FormState } from "@/app/[locale]/dashboard/actions";
+import { reviewEntity, saveEntity, type FormState } from "@/app/actions/content";
 import { DatePicker } from "@/components/admin/DatePicker";
 import { addPending, removePending, toast } from "@/components/admin/live";
 import { ImageField, ImagesField, PhotoPasteContext, UploadBusyContext } from "@/components/admin/PhotoFields";
@@ -104,7 +104,7 @@ function FormBody({
   const dirty = useRef(false);
   const hasEn = e.fields.some((f) => ("en" in f && f.en) || f.kind === "timeline");
   const sendLabel = staff ? t("form.sendStaff") : t("form.send");
-  const listHref = { pathname: `/dashboard/${entity}`, query: { year: String(year) } };
+  const listHref = { pathname: `/admin/content/${entity}`, query: { year: String(year) } };
 
   // photo fields register for Ctrl+V / report upload activity
   const pasteTargets = useRef<((f: File[]) => void)[]>([]);
@@ -177,7 +177,7 @@ function FormBody({
       if (!res.ok || !res.id) return;
       localStorage.removeItem(draftStorageKey);
       toast({ tone: "ok", text: t("toast.saved") });
-      if (!id) router.replace({ pathname: `/dashboard/${entity}/${res.id}`, query: { year: String(year) } });
+      if (!id) router.replace({ pathname: `/admin/content/${entity}/${res.id}`, query: { year: String(year) } });
       else router.refresh();
       return;
     }
@@ -189,7 +189,7 @@ function FormBody({
     // carry this form's action
     const request = saveEntity(entity, id, year, locale, { ok: false }, fd);
     if (mode === "send") router.push(listHref);
-    else router.push({ pathname: `/dashboard/${entity}/new`, query: { year: String(year), n: Date.now().toString(36) } });
+    else router.push({ pathname: `/admin/content/${entity}/new`, query: { year: String(year), n: Date.now().toString(36) } });
     const res = await request.catch((err) => { console.error("[save]", err); return { ok: false } as FormState; });
     let published = false;
     if (res.ok && res.id && mode === "send" && staff) published = (await reviewEntity(entity, res.id, "approve", "")).ok;
@@ -198,7 +198,7 @@ function FormBody({
       localStorage.removeItem(draftStorageKey);
       toast({ tone: "ok", text: published ? t("toast.published") : mode === "send" && !staff ? t("toast.sent") : t("toast.saved") });
     } else {
-      toast({ tone: "error", text: t("toast.failed", { msg: msg(res) }), action: { label: t("toast.back"), href: id ? `/dashboard/${entity}/${id}?year=${year}` : `/dashboard/${entity}/new?year=${year}` } }, 0);
+      toast({ tone: "error", text: t("toast.failed", { msg: msg(res) }), action: { label: t("toast.back"), href: id ? `/admin/content/${entity}/${id}?year=${year}` : `/admin/content/${entity}/new?year=${year}` } }, 0);
     }
     router.refresh();
   }
@@ -341,7 +341,7 @@ function FormBody({
                 {t("form.saveNew")}
               </button>
               {id && (
-                <Link href={{ pathname: `/dashboard/${entity}/new`, query: { year: String(year), from: id } }} className="rounded-full px-4 py-2.5 text-sm font-semibold text-muted hover:text-ink">
+                <Link href={{ pathname: `/admin/content/${entity}/new`, query: { year: String(year), from: id } }} className="rounded-full px-4 py-2.5 text-sm font-semibold text-muted hover:text-ink">
                   {t("form.duplicate")}
                 </Link>
               )}

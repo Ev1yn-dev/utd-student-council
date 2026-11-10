@@ -10,7 +10,7 @@
     "i18n:check": "node scripts/check-i18n.mjs",
     "check:layout": "node scripts/check-layout.mjs",
     "svg:optimize": "svgo -f public/illustrations -o public/illustrations --multipass",
-    "test:auth": "node --no-warnings scripts/test-auth-rules.mts",
+    "test:auth": "vitest run tests/permissions.test.ts",
     "test:council": "node --no-warnings scripts/test-council-roles.mts",
     "env:docs": "node --no-warnings scripts/gen-env-docs.mts",
     "db:migrate": "node scripts/db-migrate.mjs",
@@ -33,7 +33,6 @@
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
     "browser-image-compression": "^2.0.2",
-    "chart.js": "^4.6.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.69.0",
     "motion": "^14.3.0",
@@ -57,7 +56,8 @@
     "eslint-config-next": "16.4.2",
     "svgo": "^4.1.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=22"

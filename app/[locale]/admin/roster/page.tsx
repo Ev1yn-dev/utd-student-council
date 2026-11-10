@@ -1,14 +1,14 @@
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { RosterImport } from "@/components/admin/RosterImport";
 import { Card, ErrorNote, PageHeader } from "@/components/admin/stats/ui";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { currentAcademicYear, rosterSummary } from "@/lib/roster";
 
 /** Admin only: student roster for the voice form. Counts per grade, never a list of IDs. */
 export default async function RosterPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireRole(["admin"]);
+  await requirePermission("roster.import");
   const [t, tv, f] = await Promise.all([getTranslations("roster"), getTranslations("voice"), getFormatter()]);
   const sum = await rosterSummary().catch((e: Error) => (console.error("[admin] roster", e.message), null));
 

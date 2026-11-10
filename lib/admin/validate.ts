@@ -44,6 +44,8 @@ export function parse(e: Entity, fd: FormData): Parsed {
       case "textarea": {
         values[f.name] = check(f.name, text(f, "th"), f.name === "instagram" ? v.replace(/^@/, "") : v, { key: "required" }) ?? v;
         if (f.name === "instagram") values[f.name] = String(values[f.name]).replace(/^@/, "");
+        // optional file paths are stored as null when empty (their check constraints accept null, not "")
+        if (f.name === "card_path" && !values[f.name]) values[f.name] = null;
         if (f.en) values[`${f.name}_en`] = check(`${f.name}_en`, text(f, "en"), clean(fd.get(`${f.name}_en`)), { key: "tooLong", values: { max: f.max } }) ?? "";
         break;
       }

@@ -4,11 +4,10 @@ import seed from "@/content/seed.json";
 import { isCouncilRole, roleFromTitle, type CouncilRole } from "@/lib/council";
 import { deptByKey, deptKeyFromLabel } from "@/lib/council-departments";
 import { rosterPhoto } from "@/lib/council-images";
-import { COUNCIL_MEMBERS, COUNCIL_YEAR, type CouncilMember } from "@/lib/council-members";
+import type { StaffGroup, StaffMember } from "@/lib/council-members";
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
 import { publicClient, publicImageUrl } from "@/lib/supabase/public";
-import leaders from "@/public/images/council/leaders.json";
 
 // Public content, scoped to one academic year. With Supabase configured it comes from approved rows
 // (RLS: anon sees status='approved' only, and never the instagram/contact columns); without it (local dev)
@@ -46,10 +45,10 @@ export type Member = {
 export type YearContent = {
   year: number; years: number[]; current: number;
   announcements: Announcement[]; activities: Activity[]; policies: Policy[];
-  /** council committee (students): database rows merged with src/data/council-members.json (group "member") */
+  /** council committee (students): approved rows of public.members */
   members: Member[];
-  /** school executives and teacher advisors (src/data/council-members.json); empty for any other year */
-  staff: CouncilMember[];
+  /** school executives and teacher advisors: approved rows of public.advisors */
+  staff: StaffMember[];
 };
 /** Hero slide: either an uploaded photo (storage variants) or a banner file shipped in public/banner. */
 export type Photo = {
@@ -118,6 +117,12 @@ const toPolicy = (r: Row): Policy => ({
  * the public bucket only while consent is on (lib/admin/consent.ts copies / removes them).
  */
 const memberPhotos = (r: Row): { photo: Img | null; poster: Img | null } => {
+  // introduction card shipped in public/images/council (the people on the roster agreed to it): shown whole in the popup
+  const card = r.card_path as string | null;
+  if (card) {
+    const img = rosterPhoto({ id: r.id, card, avatar: (r.avatar_path as string | null) ?? "", cardW: (r.card_w as number | null) ?? undefined, cardH: (r.card_h as number | null) ?? undefined });
+    return { photo: img, poster: img };
+  }
   if (r.consent_photo !== true) return { photo: null, poster: null };
   const key = r.photo_key as string | null;
   if (!key) return { photo: toImg(one(r.photo as PhotoRow | null)), poster: null };
@@ -140,60 +145,6 @@ const toMember = (r: Row, contact: Contact): Member => {
   };
 };
 
-// ───────────────────────── council roster (src/data/council-members.json) ─────────────────────────
-
-/** Same person in both sources: spaces and the title prefix (นาย / นางสาว / นาง) are ignored. */
-const nameKey = (v: string) => v.normalize("NFC").replace(/\s+/g, "").replace(/^(นางสาว|นาง|นาย)/, "");
-
-/**
- * Students from the roster file merged into the committee: a person already in the database (by name) gets the
- * file's nickname, department, role, party, IG and photo; anyone else is added, after the stored people of their
- * department. Their IG comes from the file, which they agreed to publish.
- */
-function withRoster(members: Member[]): Member[] {
-  const out = [...members];
-  for (const p of COUNCIL_MEMBERS) {
-    if (p.group !== "member") continue;
-    const d = deptByKey(deptKeyFromLabel(p.department ?? ""));
-    const card = rosterPhoto(p);
-    const i = out.findIndex((m) => nameKey(m.name.th) === nameKey(p.name));
-    const old = i >= 0 ? out[i] : null;
-    const next: Member = {
-      id: old?.id ?? p.id, name: old?.name ?? l(p.name, null), termNo: old?.termNo ?? "", execTitle: old?.execTitle ?? l("", null),
-      rank: old?.rank ?? 1000 + p.order, contact: old?.contact ?? null,
-      nickname: p.nickname ? l(p.nickname, null) : old?.nickname ?? l("", null),
-      role: l(p.role, null), councilRole: roleFromTitle(p.role),
-      dept: d ? l(d.th, d.en) : l(p.department, null), deptKey: d?.key ?? null,
-      party: p.party ? l(p.party, null) : old?.party ?? l("", null),
-      instagram: igHandle(p.instagram) ?? old?.instagram ?? null,
-      photo: card, poster: card,
-    };
-    if (old) out[i] = next;
-    else out.push(next);
-  }
-  return out;
-}
-
-/** leader introduction cards (public/images/council/leaders.json), 720×900 */
-const LEADER_CARD = { w: 720, h: 900 } as const;
-
-/**
- * Leaders (president, vice presidents, department heads) stay database rows; their photo and popup poster come from
- * the introduction card in public/images/council/cards instead of the stored photo, matched by name. `aliases` are
- * misspelled names still in the database; a matched row shows the file's spelling.
- */
-function withLeaderCards(members: Member[]): Member[] {
-  const byName = new Map(
-    leaders.leaders.flatMap((p) => [p.name, ...(p.aliases ?? [])].map((n) => [nameKey(n), p] as const)),
-  );
-  return members.map((m) => {
-    const p = byName.get(nameKey(m.name.th));
-    if (!p) return m;
-    const card = rosterPhoto({ id: p.id, card: p.card, avatar: p.avatar }, LEADER_CARD);
-    return { ...m, name: l(p.name, m.name.en), photo: card, poster: card };
-  });
-}
-
 // ───────────────────────── years ─────────────────────────
 
 export async function getYears(): Promise<{ years: number[]; current: number }> {
@@ -209,16 +160,12 @@ export async function getYears(): Promise<{ years: number[]; current: number }> 
 export async function getYearContent(requested?: number): Promise<YearContent> {
   const { years, current } = await getYears();
   const year = requested && years.includes(requested) ? requested : current;
-  const content = supabaseConfigured() ? await fromDb(year) : fromSeed(year);
-  const roster = year === COUNCIL_YEAR;
-  return {
-    year, years, current, ...content,
-    members: roster ? withLeaderCards(withRoster(content.members)) : content.members,
-    staff: roster ? COUNCIL_MEMBERS.filter((p) => p.group !== "member") : [],
-  };
+  const content = supabaseConfigured() ? await fromDb(year) : { ...fromSeed(year), staff: [] };
+  return { year, years, current, ...content };
 }
 
 type Lists = Pick<YearContent, "announcements" | "activities" | "policies" | "members">;
+type DbLists = Lists & Pick<YearContent, "staff">;
 const bySort = (a: Row, b: Row) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
 
 function fromSeed(year: number): Lists {
@@ -238,17 +185,19 @@ function fromSeed(year: number): Lists {
 const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
 const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
 const POL = `id,year,slug,created_at,updated_at,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
-const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,council_role,dept_key,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
+const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,council_role,dept_key,consent_photo,photo_key,card_path,card_w,card_h,avatar_path,photo:photos!photo_id(${IMG_COLS})`;
+const STAFF = "id,name,nickname,role_label,staff_group,sort_order,card_path,card_w,card_h,avatar_path";
 
-async function fromDb(year: number): Promise<Lists> {
+async function fromDb(year: number): Promise<DbLists> {
   const db = publicClient();
-  const [ann, act, pol, mem] = await Promise.all([
+  const [ann, act, pol, mem, adv] = await Promise.all([
     db.from("announcements").select(ANN).eq("year", year).order("pinned", { ascending: false }).order("published_on", { ascending: false }),
     db.from("activities").select(ACT).eq("year", year).order("event_date", { ascending: false }),
     db.from("policies").select(POL).eq("year", year).order("sort_order"),
     db.from("members").select(MEM).eq("year", year).order("sort_order"),
+    db.from("advisors").select(STAFF).eq("year", year).order("sort_order"),
   ]);
-  for (const r of [ann, act, pol, mem]) if (r.error) console.error("[content]", r.error.message);
+  for (const r of [ann, act, pol, mem, adv]) if (r.error) console.error("[content]", r.error.message);
   const contacts = await consentedContacts(year);
   const none = contactOf(false, null, null);
   const rows = (d: unknown) => (d ?? []) as Row[];
@@ -257,8 +206,15 @@ async function fromDb(year: number): Promise<Lists> {
     activities: rows(act.data).map(toActivity),
     policies: rows(pol.data).map(toPolicy),
     members: rows(mem.data).map((r) => toMember(r, contacts.get(r.id) ?? none)),
+    staff: rows(adv.data).map(toStaff),
   };
 }
+
+const toStaff = (r: Row): StaffMember => ({
+  id: r.id, order: Number(r.sort_order ?? 0), group: (r.staff_group === "executive" ? "executive" : "advisor") as StaffGroup,
+  name: s(r, "name"), nickname: s(r, "nickname") || undefined, role: s(r, "role_label"),
+  card: s(r, "card_path"), cardW: (r.card_w as number | null) ?? undefined, cardH: (r.card_h as number | null) ?? undefined, avatar: s(r, "avatar_path"),
+});
 
 /** instagram/contact are not readable with the anon key; read them with the service role, consented + approved only. */
 async function consentedContacts(year: number) {

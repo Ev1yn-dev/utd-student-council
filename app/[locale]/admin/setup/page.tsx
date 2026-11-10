@@ -2,7 +2,7 @@ import { AlertTriangle, CircleCheck, CircleHelp, CircleX } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ICON } from "@/components/admin/icon";
 import { activeSharedAccounts } from "@/lib/admin/users";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ENV_VARS, envStatus, type EnvStatus } from "@/lib/env-spec";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ async function googleStatus(): Promise<Status> {
 export default async function SetupPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireRole(["admin"]);
+  await requirePermission("settings.edit");
   const t = await getTranslations("setup");
   const rows = ENV_VARS.map((v) => ({ v, status: envStatus(v) as Status }));
   const [google, shared] = await Promise.all([googleStatus(), activeSharedAccounts()]);
@@ -73,7 +73,7 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <header>
-        <h1 className="text-2xl font-bold text-strong">{t("title")}</h1>
+        <h1 className="sr-only">{t("title")}</h1>
         <p className="text-sm text-muted">{t("sub")}</p>
         <p className="mt-1 text-xs text-muted">{t("mode", { mode: process.env.NODE_ENV ?? "?" })} · {t("restart")}</p>
       </header>

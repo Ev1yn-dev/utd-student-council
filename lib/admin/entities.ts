@@ -1,5 +1,5 @@
 // Back-office content types. One config drives the list page, the form and server-side validation
-// (app/[locale]/dashboard/actions.ts), so a field exists in exactly one place. Labels/hints are message keys:
+// (app/actions/content.ts), so a field exists in exactly one place. Labels/hints are message keys:
 // dashboard.entities.<entity>, dashboard.fields.<entity>.<field>, dashboard.hints.<entity>.<field> (optional).
 // Shared by server and client: no secrets here.
 import { COUNCIL_ROLES } from "@/lib/council";
@@ -8,7 +8,7 @@ import { DEPARTMENTS } from "@/lib/council-departments";
 type Base = { name: string; hint?: true };
 export type Field =
   /** `en`: also has an optional English column <name>_en, filled on the form's English tab */
-  | (Base & { kind: "text"; required?: boolean; max: number; en?: true; pattern?: { re: string; error: "badInstagram" | "badSlug" } })
+  | (Base & { kind: "text"; required?: boolean; max: number; en?: true; pattern?: { re: string; error: "badInstagram" | "badSlug" | "badCardPath" } })
   | (Base & { kind: "textarea"; required?: boolean; max: number; rows?: number; en?: true })
   | (Base & { kind: "date"; required?: boolean })
   | (Base & { kind: "url" })
@@ -35,6 +35,8 @@ export type Entity = {
 };
 
 const IG = { re: "^@?[A-Za-z0-9._]{0,30}$", error: "badInstagram" as const };
+/** introduction card shipped in public/images/council/cards (shown instead of the uploaded photo) */
+const CARD = { name: "card_path", kind: "text", max: 80, hint: true, pattern: { re: "^/images/council/cards/[a-z0-9-]+\\.webp$", error: "badCardPath" } } as const;
 
 export const ENTITIES: Record<EntityKey, Entity> = {
   announcements: {
@@ -89,6 +91,7 @@ export const ENTITIES: Record<EntityKey, Entity> = {
     order: { col: "sort_order", asc: true },
     fields: [
       { name: "photo_id", kind: "image", portrait: true },
+      CARD,
       { name: "name", kind: "text", required: true, max: 120, en: true },
       { name: "nickname", kind: "text", max: 40, en: true },
       { name: "role_title", kind: "text", required: true, max: 120, en: true, hint: true },
@@ -110,9 +113,11 @@ export const ENTITIES: Record<EntityKey, Entity> = {
     order: { col: "sort_order", asc: true },
     fields: [
       { name: "photo_id", kind: "image", portrait: true },
+      CARD,
       { name: "name", kind: "text", required: true, max: 120, en: true },
       { name: "nickname", kind: "text", max: 40, en: true },
-      { name: "role_label", kind: "text", required: true, max: 60, en: true, hint: true },
+      { name: "role_label", kind: "text", required: true, max: 120, en: true, hint: true },
+      { name: "staff_group", kind: "select", options: ["advisor", "executive"], default: "advisor", hint: true },
       { name: "subject_group", kind: "text", max: 120, en: true },
       { name: "position", kind: "text", max: 120, en: true },
       { name: "sort_order", kind: "number", min: 0, max: 999 },

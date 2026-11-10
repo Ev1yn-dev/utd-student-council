@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useActionState, useState, useTransition } from "react";
-import { addYear, setCurrentYear, type FormState } from "@/app/[locale]/dashboard/actions";
+import { addYear, setCurrentYear, type FormState } from "@/app/actions/content";
 import { useRouter } from "@/i18n/navigation";
 import { ceYear } from "@/lib/utils";
 

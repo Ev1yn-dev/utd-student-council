@@ -24,7 +24,7 @@ export default async function LoginPage({ params, searchParams }: { params: Prom
   const [{ locale }, { error }] = await Promise.all([params, searchParams]);
   const t = await getTranslations({ locale, namespace: "auth" });
   const s = await getSession();
-  if (s) redirect({ href: s.role ? "/dashboard" : "/pending-access", locale });
+  if (s) redirect({ href: s.role ? "/admin" : "/pending-access", locale });
   const ok = supabaseConfigured();
   const key = !ok ? "config" : error === "domain" || error === "oauth" || error === "config" ? error : error ? "oauth" : null;
   const msg = key ? t(`errors.${key}`, { domain: allowedDomain() }) : null;

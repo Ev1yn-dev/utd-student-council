@@ -27,6 +27,10 @@
   --c-progress: #e59a0b;
   --c-planned: #8a96b0;
   --c-danger: #b42318;
+  /* back-office charts: validated pair on white (blue = first series, pink = second / highlight) + quiet grid */
+  --c-chart-1: #3159c4;
+  --c-chart-2: #e8508b;
+  --c-chart-grid: #e6eaf2;
   --shadow-soft: 0 1px 2px rgb(11 31 77 / 0.04), 0 8px 28px -6px rgb(11 31 77 / 0.10);
   --shadow-lift: 0 2px 4px rgb(11 31 77 / 0.05), 0 22px 44px -14px rgb(232 80 139 / 0.30);
   --shadow-glow: 0 0 22px 2px rgb(242 122 168 / 0.55);
@@ -285,4 +289,19 @@ html.protect-wall body > :not(#utd-protect-wall) { display: none !important; }
     content: "โปรดติดต่อสภานักเรียนนะค้าบ เราทำเว็บนี้โดยกันการดึงโค้ด เพื่อไม่ให้ใครใช้ลิขสิทธิ์ของเราไป";
     display: block; padding: 48px 24px; text-align: center; font: 600 18pt/1.7 var(--font-plex), sans-serif; color: #000;
   }
+}
+
+/* back-office charts draw in once, on mount (an element that stays mounted is not animated again when its data
+   changes); nothing moves with reduced motion */
+@keyframes chart-in {
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chart-grow { transform-box: fill-box; transform-origin: bottom; animation: chart-in 0.5s var(--ease-out) both; }
+  .chart-fade { animation: chart-fade 0.5s var(--ease-out) both; }
 }

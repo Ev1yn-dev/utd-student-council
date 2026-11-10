@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
-import { deletePhoto, setHero } from "@/app/[locale]/dashboard/actions";
+import { deletePhoto, setHero } from "@/app/actions/content";
 import { useRouter } from "@/i18n/navigation";
 
 type P = { id: string; caption: string; isHero: boolean; order: number; start: string; end: string; url: string; credit: "school" | "council" | null };

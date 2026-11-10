@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
-import { deleteEntity, reviewEntity, type Result } from "@/app/[locale]/dashboard/actions";
+import { deleteEntity, reviewEntity, type Result } from "@/app/actions/content";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { EntityKey, ReviewStatus } from "@/lib/admin/entities";
 import { cn } from "@/lib/utils";

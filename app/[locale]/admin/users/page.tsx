@@ -1,21 +1,19 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AllowedUsers } from "@/components/admin/AllowedUsers";
-import { listAllowed } from "@/lib/admin/users";
-import { requireRole } from "@/lib/auth";
+import { AdminUsers } from "@/components/admin/AdminUsers";
+import { PageHeader } from "@/components/admin/stats/ui";
+import { activeOwnerCount, listAdminUsers } from "@/lib/admin/users";
+import { requirePermission } from "@/lib/auth";
 
-/** Admin: who may use the back office and with which role (ADMIN_EMAILS aside). */
+/** users.manage: who may use the back office, their role, extra permissions, and whether the account is on. */
 export default async function UsersPage({ params }: { params: Promise<{ locale: string }> }) {
-  setRequestLocale((await params).locale);
-  await requireRole(["admin"]);
-  const t = await getTranslations("users");
-  const users = await listAllowed();
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const s = await requirePermission("users.manage");
+  const [t, users, owners] = await Promise.all([getTranslations("admin.users"), listAdminUsers(), activeOwnerCount()]);
   return (
-    <div className="max-w-4xl space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold text-strong">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("lead")}</p>
-      </header>
-      <AllowedUsers users={users} />
+    <div className="max-w-6xl space-y-6">
+      <PageHeader title={t("title")} lead={t("lead")} />
+      <AdminUsers users={users} me={{ email: s.email, role: s.role, extra: s.extra, disabled: false }} owners={owners} />
     </div>
   );
 }

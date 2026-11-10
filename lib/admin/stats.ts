@@ -1,7 +1,7 @@
 import "server-only";
 import { adminClient } from "@/lib/supabase/admin";
 
-// Aggregates for the admin statistics pages. Callers must have checked requireRole(["admin"]) first.
+// Aggregates for the admin statistics pages. Callers must have checked requirePermission("stats.view") first.
 // Days are Asia/Bangkok calendar days (same as the SQL functions in migration 0014).
 
 export const RANGES = [7, 30, 90] as const;
@@ -49,6 +49,8 @@ export async function visitReport(days: Range) {
     refs: list("ref"),
     devices: list("device"),
     countries: list("country"),
+    /** "<ISO weekday 1-7>-<hour 00-23>" -> views (Bangkok time; collected since migration 0019) */
+    hours: Object.fromEntries(rows.filter((r) => r.dim === "hour").map((r) => [r.key, Number(r.views)])) as Record<string, number>,
   };
 }
 
@@ -72,11 +74,16 @@ export async function voiceReport(days: Range) {
     total: sum(series.map((s) => s.n)),
     grades: [1, 2, 3, 4, 5, 6].map((g) => ({ grade: g, n: grade.get(String(g)) ?? 0 })),
     noGrade: grade.get("") ?? 0,
+    /** per grade: rooms with their counts, most first (key "<grade>/<room>") */
+    rooms: of("room").map((r) => {
+      const [g, ...room] = r.key.split("/");
+      return { grade: Number(g), room: room.join("/"), n: Number(r.n) };
+    }).sort((a, b) => b.n - a.n),
     categories: of("category").map((r) => ({ key: r.key, n: Number(r.n) })).sort((a, b) => b.n - a.n),
   };
 }
 
-/** Overview cards: each value with the one from the period before it. */
+/** Overview cards: each value with the one from the period before it, plus the last 7 days for a sparkline. */
 export async function overview() {
   const [v, s] = await Promise.all([visitRows(14), voiceRows(14)]);
   const days = lastDays(14);
@@ -87,9 +94,9 @@ export async function overview() {
   const perDay = new Map(s.filter((r) => r.dim === "day").map((r) => [r.key, Number(r.n)]));
   const voice = (ds: string[]) => sum(ds.map((d) => perDay.get(d) ?? 0));
   return {
-    today: { now: views(days.slice(13)), prev: views(days.slice(12, 13)) },
-    views7: { now: views(cur), prev: views(prev) },
-    uniques7: { now: uniques(cur), prev: uniques(prev) },
-    voice7: { now: voice(cur), prev: voice(prev) },
+    today: { now: views(days.slice(13)), prev: views(days.slice(12, 13)), spark: cur.map((d) => views([d])) },
+    views7: { now: views(cur), prev: views(prev), spark: cur.map((d) => views([d])) },
+    uniques7: { now: uniques(cur), prev: uniques(prev), spark: cur.map((d) => uniques([d])) },
+    voice7: { now: voice(cur), prev: voice(prev), spark: cur.map((d) => voice([d])) },
   };
 }

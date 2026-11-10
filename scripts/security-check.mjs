@@ -24,7 +24,7 @@ const results = [];
 const check = (name, ok, info = "") => { results.push({ name, ok }); console.log(`${ok ? "PASS" : "FAIL"}  ${name}${info ? `  (${info})` : ""}`); };
 
 const CONTENT = ["announcements", "activities", "policies", "members", "advisors", "photos"];
-const PRIVATE = ["profiles", "allowed_users", "role_invites", "audit_logs", "security_events", "voice_messages", "voice_replies"];
+const PRIVATE = ["profiles", "admin_users", "admin_audit", "allowed_users", "role_invites", "audit_logs", "security_events", "voice_messages", "voice_replies"];
 
 async function rest(path, key, init = {}) {
   const r = await fetch(`${URL_}/rest/v1/${path}`, { ...init, headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json", ...init.headers } });

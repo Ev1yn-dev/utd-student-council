@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { Contact, Img, L, Member } from "@/lib/content";
 import { rosterPhoto } from "@/lib/council-images";
-import type { CouncilGroup, CouncilMember } from "@/lib/council-members";
+import type { StaffGroup, StaffMember } from "@/lib/council-members";
 import { COUNCIL_ROLES, groupByDepartment, type CouncilRole, type Department } from "@/lib/council";
 import { DEPARTMENTS } from "@/lib/council-departments";
 import { EmptyState } from "@/components/home/EmptyState";
@@ -41,7 +41,7 @@ const Modal = dynamic(() => import("@/components/ui/Modal").then((r) => r.Modal)
  * student council teacher advisors. Both use the same portrait card and popup.
  */
 export function PeopleTab({ kind, members, staff, query, onClear }: {
-  kind: "council" | "advisor"; members: Member[]; staff: CouncilMember[]; query: string; onClear: () => void;
+  kind: "council" | "advisor"; members: Member[]; staff: StaffMember[]; query: string; onClear: () => void;
 }) {
   const t = useTranslations("people");
   const count = kind === "council" ? members.length : staff.length;
@@ -277,9 +277,9 @@ function MemberDetail({ m }: { m: Member }) {
 
 // ───────────────────────── executives, then teacher advisors (same card and popup as the committee) ─────────────────────────
 
-const STAFF_GROUPS: CouncilGroup[] = ["executive", "advisor"];
+const STAFF_GROUPS: StaffGroup[] = ["executive", "advisor"];
 
-function Staff({ staff }: { staff: CouncilMember[] }) {
+function Staff({ staff }: { staff: StaffMember[] }) {
   const t = useTranslations("people");
   const [openId, setOpenId] = useState<string | null>(null);
   const open = staff.find((p) => p.id === openId) ?? null;
@@ -315,7 +315,7 @@ function Staff({ staff }: { staff: CouncilMember[] }) {
 const thai = (th: string): L => ({ th, en: null });
 
 /** Popup view of an executive or teacher advisor: the introduction card whole, name and role (no party / IG). */
-function StaffDetail({ p }: { p: CouncilMember }) {
+function StaffDetail({ p }: { p: StaffMember }) {
   const t = useTranslations("people");
   const photo = rosterPhoto(p);
   return <PersonDetail p={{

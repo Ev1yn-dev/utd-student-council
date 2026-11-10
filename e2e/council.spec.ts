@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures";
 
 // Council tab: the student committee by department (content/council-departments.json order) — database rows merged
-// with src/data/council-members.json. Executives and teacher advisors are on the advisor tab. No vice-head role anywhere.
+// in the members table (roster seeded by migration 0020). Executives and teacher advisors are on the advisor tab. No vice-head role anywhere.
 test("council: committee by department, no staff, no vice head", async ({ page }) => {
   await page.goto("/th?tab=council");
   const committee = page.locator("section[aria-labelledby=council-h]");

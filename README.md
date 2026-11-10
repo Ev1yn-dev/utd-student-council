@@ -231,8 +231,7 @@ npm run dev                  # http://localhost:3000
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Redis สำหรับ rate limiting |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile |
 | `ALLOWED_EMAIL_DOMAIN` | โดเมนอีเมลของโรงเรียน |
-| `ADMIN_EMAILS` | ผู้ดูแลระบบ (คั่นด้วยจุลภาค) |
-| `COUNCIL_EMAILS` | ใช้กับสคริปต์ seed บัญชีบทบาทสภานักเรียน |
+| `ADMIN_EMAILS` | เจ้าของระบบเริ่มต้น (คั่นด้วยจุลภาค) — ล็อกอินครั้งแรกได้บทบาทเจ้าของระบบ จากนั้นจัดการที่หน้าผู้ใช้และสิทธิ์ |
 
 </details>
 

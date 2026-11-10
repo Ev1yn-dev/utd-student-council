@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { reviewEntity } from "@/app/[locale]/dashboard/actions";
+import { reviewEntity } from "@/app/actions/content";
 import { toast, usePending } from "@/components/admin/live";
 import { RowActions } from "@/components/admin/RowActions";
 import { StatusBadge } from "@/components/admin/StatusBadge";

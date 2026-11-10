@@ -4,7 +4,7 @@ import { ICON } from "@/components/admin/icon";
 import { MessageControls } from "@/components/admin/MessageControls";
 import { ErrorNote, PageHeader } from "@/components/admin/stats/ui";
 import { Link } from "@/i18n/navigation";
-import { audit, requireRole } from "@/lib/auth";
+import { audit, hasPermission, requirePermission } from "@/lib/auth";
 import { VOICE_CATEGORIES } from "@/lib/site";
 import { PAGE_SIZE, listMessages, messageRooms, type MessageFilters } from "@/lib/voice-admin";
 import { cn } from "@/lib/utils";
@@ -27,22 +27,30 @@ function filters(sp: SP): MessageFilters {
   };
 }
 
-/** Admin only: every council voice message with its sender. Each view is written to audit_logs. */
+/**
+ * messages.read: council voice messages. The sender (name, class, student ID) is shown only with
+ * messages.identity.view, and every page shown with identities is written to admin_audit.
+ */
 export default async function MessagesPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<SP> }) {
   const [{ locale }, sp] = await Promise.all([params, searchParams]);
   setRequestLocale(locale);
-  const s = await requireRole(["admin"]);
+  const s = await requirePermission("messages.read");
+  const identity = hasPermission(s, "messages.identity.view");
   const [t, tv, f] = await Promise.all([getTranslations("inbox"), getTranslations("voice"), getFormatter()]);
   const fl = filters(sp);
+  if (!identity) fl.room = undefined; // the room narrows down the sender: identity view only
   const [data, rooms] = await Promise.all([
-    listMessages(fl).catch((e: Error) => (console.error("[admin] messages", e.message), null)),
-    messageRooms().catch(() => [] as string[]),
+    listMessages(fl, identity).catch((e: Error) => (console.error("[admin] messages", e.message), null)),
+    identity ? messageRooms().catch(() => [] as string[]) : ([] as string[]),
   ]);
-  // who looked, when, with which filters (never names, IDs or the search text)
-  await audit(s, "voice.view", "voice_messages", undefined, {
-    page: fl.page, grade: fl.grade ?? null, room: fl.room ?? null, topic: fl.topic ?? null, from: fl.from ?? null, to: fl.to ?? null,
-    search: !!fl.q, unread: fl.unread, flagged: fl.flagged, shown: data?.rows.length ?? 0,
-  });
+  // identities shown: who looked, when, with which filters, how many senders (never names, IDs or the search text)
+  const identified = identity ? (data?.rows ?? []).filter((m) => m.student_id).length : 0;
+  if (identified) {
+    await audit(s, "message.identity", "voice_messages", {
+      page: fl.page, grade: fl.grade ?? null, room: fl.room ?? null, topic: fl.topic ?? null, from: fl.from ?? null, to: fl.to ?? null,
+      search: !!fl.q, unread: fl.unread, flagged: fl.flagged, identified,
+    });
+  }
 
   const topic = (k: string) => (k in VOICE_CATEGORIES ? tv(`categories.${VOICE_CATEGORIES[k as keyof typeof VOICE_CATEGORIES]}`) : k);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
@@ -50,7 +58,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const field = "w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm";
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="max-w-7xl space-y-6">
       <PageHeader title={t("title")} lead={t("lead")} />
 
       <form method="get" aria-label={t("filters.label")} className="grid gap-3 rounded-[20px] border border-line bg-surface p-4 shadow-soft sm:grid-cols-2 lg:grid-cols-4">
@@ -61,13 +69,13 @@ export default async function MessagesPage({ params, searchParams }: { params: P
             {[1, 2, 3, 4, 5, 6].map((g) => <option key={g} value={g}>{tv("gradeLabel", { g })}</option>)}
           </select>
         </label>
-        <label className="text-xs text-muted">
+        {identity && <label className="text-xs text-muted">
           {t("filters.room")}
           <select name="room" defaultValue={sp.room ?? ""} className={cn(field, "mt-1 text-ink")}>
             <option value="">{t("filters.all")}</option>
             {rooms.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
-        </label>
+        </label>}
         <label className="text-xs text-muted">
           {t("filters.topic")}
           <select name="topic" defaultValue={sp.topic ?? ""} className={cn(field, "mt-1 text-ink")}>
@@ -136,7 +144,9 @@ export default async function MessagesPage({ params, searchParams }: { params: P
                     </div>
                     <p className="mt-2 whitespace-pre-wrap break-words text-ink">{m.message}</p>
                     <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
-                      {m.student_id ? (
+                      {!identity ? (
+                        <div className="sm:col-span-3"><dd className="text-muted">{t("identityHidden")}</dd></div>
+                      ) : m.student_id ? (
                         <>
                           <div><dt className="text-xs text-muted">{t("name")}</dt><dd className="font-medium">{name || "—"}</dd></div>
                           <div><dt className="text-xs text-muted">{t("class")}</dt><dd>{cls}</dd></div>
@@ -147,7 +157,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
                       )}
                     </dl>
                     <div className="mt-3 border-t border-line pt-3">
-                      <MessageControls id={m.id} read={!!m.read_at} canBlock={!!m.student_id} />
+                      <MessageControls id={m.id} read={!!m.read_at} canBlock={!!m.student_id && hasPermission(s, "senders.block")} canDelete={hasPermission(s, "messages.delete")} />
                     </div>
                   </li>
                 );

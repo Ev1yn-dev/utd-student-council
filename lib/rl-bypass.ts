@@ -1,13 +1,13 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { inRanges, isIp } from "./client-ip.ts";
-import { adminEmails, normalizeEmail } from "./env.ts"; // relative + extension: also loaded by plain Node in scripts/test-rate-limit.mts
+import { normalizeEmail } from "./env.ts"; // relative + extension: also loaded by plain Node in scripts/test-rate-limit.mts
 
-// Rate-limit bypass for administrators (ADMIN_EMAILS only). Issued by /auth/callback, or by the proxy on a back-office
-// page, only AFTER Supabase verified the session and the address matched ADMIN_EMAILS — never from anything the
-// browser claims. Cookie value: base64url(email).exp.HMAC-SHA256(APP_SECRET, "email|exp"); httpOnly, Secure,
+// Rate-limit bypass for back-office accounts (any active row in admin_users). Issued by /auth/callback, or by the
+// proxy on a back-office page, only AFTER Supabase verified the session and admin_users granted a role — never from
+// anything the browser claims. Cookie value: base64url(email).exp.HMAC-SHA256(APP_SECRET, "email|exp"); httpOnly, Secure,
 // SameSite=Lax, 12 h, path "/". It skips only the app's own rate limits, on every path (back office, /auth, /api,
-// the voice form); bot blocks, bans, the browser gate, CSP, Turnstile and Cloudflare stay in force. The address is
-// re-checked against ADMIN_EMAILS on every use, so removing it from the env var revokes the cookie at once.
+// the voice form); bot blocks, bans, the browser gate, CSP, Turnstile and Cloudflare stay in force. When a limit is
+// actually hit, proxy.ts re-checks the address against admin_users (disabled / removed -> the limit applies).
 //
 // Second bypass: RATE_LIMIT_ALLOW_IPS (comma-separated IPv4 / IPv6 addresses or CIDR ranges), matched against the
 // real client IP from lib/client-ip.ts (cf-connecting-ip only when the request really came through Cloudflare).
@@ -43,16 +43,16 @@ function secret() {
 }
 const mac = (key: string, data: string) => createHmac("sha256", key).update(data).digest("base64url");
 
-/** Cookie value for a verified admin address, or null if the address is not in ADMIN_EMAILS (or no secret). */
+/** Cookie value for an address the caller has verified as a back-office account, or null (no secret / no address). */
 export function issueBypass(email: string, nowSec = Math.floor(Date.now() / 1000)) {
   const key = secret();
   const e = normalizeEmail(email);
-  if (!key || !adminEmails().includes(e)) return null;
+  if (!key || !e) return null;
   const exp = nowSec + RL_BYPASS_TTL_SEC;
   return `${Buffer.from(e).toString("base64url")}.${exp}.${mac(key, `${e}|${exp}`)}`;
 }
 
-/** The admin address a cookie value proves, or null (bad signature, expired, malformed, or no longer an admin). */
+/** The address a cookie value proves, or null (bad signature, expired, malformed). Not a role check: see proxy.ts. */
 export function verifyBypass(value: string | null | undefined, nowSec = Math.floor(Date.now() / 1000)): string | null {
   const key = secret();
   if (!key || !value) return null;
@@ -71,6 +71,5 @@ export function verifyBypass(value: string | null | undefined, nowSec = Math.flo
   const want = Buffer.from(mac(key, `${email}|${exp}`));
   const got = Buffer.from(sig);
   if (want.length !== got.length || !timingSafeEqual(want, got)) return null;
-  // exact (lower-case) match with the current list — no wildcard, no domain match
-  return adminEmails().includes(normalizeEmail(email)) && email === normalizeEmail(email) ? email : null;
+  return email && email === normalizeEmail(email) ? email : null;
 }

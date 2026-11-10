@@ -467,7 +467,8 @@
         "contact": "Other contact",
         "consent_public": "The person agreed to show their contact details",
         "council_role": "Role (tag and order)",
-        "dept_key": "Department"
+        "dept_key": "Department",
+        "card_path": "Introduction card (site file)"
       },
       "advisors": {
         "photo_id": "Portrait (3:4)",
@@ -479,7 +480,9 @@
         "sort_order": "Display order",
         "instagram": "Instagram",
         "contact": "Other contact",
-        "consent_public": "The person agreed to show their contact details"
+        "consent_public": "The person agreed to show their contact details",
+        "card_path": "Introduction card (site file)",
+        "staff_group": "Group"
       }
     },
     "hints": {
@@ -501,12 +504,15 @@
         "instagram": "Username only, e.g. utd_council",
         "consent_public": "Unticked = IG / contact never shown on the site",
         "council_role": "The card tag and the order within the department come from this: Chairperson → Vice Chairperson → Head → Member",
-        "dept_key": "Departments and their order come from content/council-departments.json"
+        "dept_key": "Departments and their order come from content/council-departments.json",
+        "card_path": "When set, shown instead of the uploaded photo. Empty = the uploaded photo, by consent"
       },
       "advisors": {
         "role_label": "e.g. Teacher advisor / Head teacher advisor",
         "instagram": "Username only",
-        "consent_public": "Unticked = IG / contact never shown on the site"
+        "consent_public": "Unticked = IG / contact never shown on the site",
+        "card_path": "When set, shown instead of the uploaded photo. Empty = the uploaded photo, by consent",
+        "staff_group": "Executives are listed before teacher advisors on the advisor tab"
       }
     },
     "options": {
@@ -520,6 +526,10 @@
         "vice_president": "Vice Chairperson",
         "head": "Head",
         "member": "Member"
+      },
+      "staff_group": {
+        "advisor": "Teacher advisor",
+        "executive": "School executive"
       }
     },
     "image": {
@@ -573,7 +583,8 @@
       "forbidden": "You are not allowed to do this",
       "badFile": "This file is not a supported image (use JPG, PNG or WebP).",
       "heroWindow": "The start date must not be after the end date.",
-      "badEmail": "Not a valid e-mail address."
+      "badEmail": "Not a valid e-mail address.",
+      "badCardPath": "Use a file in /images/council/cards/, e.g. /images/council/cards/name.webp"
     },
     "years": {
       "heading": "Academic years",
@@ -776,22 +787,16 @@
         "missingProd": "Uses utd.ac.th"
       },
       "ADMIN_EMAILS": {
-        "purpose": "Administrator emails (comma-separated): instant admin role and the only exception to the domain rule (must be Google-verified)",
-        "where": "The admins' Google addresses, e.g. admin1@utd.ac.th,someone@gmail.com — removing one revokes access at once",
-        "missingDev": "Nobody is admin",
-        "missingProd": "Nobody is admin — no one can grant roles or add years"
+        "purpose": "Bootstrap owner emails (comma-separated): the first sign-in creates an owner row in admin_users; afterwards manage them on Users & permissions (must be Google-verified)",
+        "where": "The owners' Google addresses, e.g. admin1@utd.ac.th,someone@gmail.com — once signed in, the users page decides",
+        "missingDev": "No bootstrap owner",
+        "missingProd": "No bootstrap owner — the owners already in admin_users still work"
       },
       "GOOGLE_OAUTH": {
         "purpose": "Google sign-in (not an .env value — configured in Supabase)",
         "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → enable, paste Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL, add <SITE_URL>/auth/callback to Redirect URLs",
         "missingDev": "Sign-in button doesn't work",
         "missingProd": "Sign-in button doesn't work"
-      },
-      "COUNCIL_EMAILS": {
-        "purpose": "Back-office sign-in accounts with the \"council\" role (comma-separated; append :shared for an account several people use). Read by node scripts/seed-allowed-users.mjs to fill the allowed_users table once; afterwards manage them on /admin/users",
-        "where": "The council account addresses from the administrator (never in a committed file) — not needed on Vercel",
-        "missingDev": "no accounts are seeded (add them on /admin/users)",
-        "missingProd": "no effect — the app reads access from the allowed_users table"
       }
     },
     "sharedTitle": "Shared accounts",
@@ -849,28 +854,6 @@
   "dock": {
     "label": "Contact and language",
     "language": "Change language"
-  },
-  "users": {
-    "nav": "Back-office users",
-    "title": "Back-office users",
-    "lead": "Addresses that may use the back office and their role (administrators come from ADMIN_EMAILS). Other @utd.ac.th addresses can sign in but get no back office; other domains cannot sign in. Every change is written to the audit log.",
-    "email": "E-mail",
-    "role": "Role",
-    "roles": {
-      "council": "Student council",
-      "teacher": "Teacher"
-    },
-    "shared": "Shared by several people",
-    "sharedBadge": "Shared account",
-    "markShared": "Mark as shared",
-    "unmarkShared": "Not shared",
-    "add": "Add / enable",
-    "active": "Enabled",
-    "inactive": "Disabled",
-    "confirmOff": "Disable {email}? They lose the back office on their next request.",
-    "addedBy": "added by {by}",
-    "empty": "No users yet",
-    "saved": "Saved"
   },
   "stats": {
     "title": "Statistics",
@@ -1035,6 +1018,271 @@
       "placeholder": "One word per line, or separated by commas",
       "none": "No words yet",
       "remove": "Remove word {word}"
+    },
+    "identityHidden": "Sender: hidden (needs the sender-identity permission)"
+  },
+  "admin": {
+    "title": "Council back office",
+    "nav": {
+      "label": "Back-office menu",
+      "overview": "Overview",
+      "stats": "Statistics",
+      "visits": "Visits",
+      "voice": "Council voice",
+      "inbox": "Inbox",
+      "messages": "Messages",
+      "blocked": "Blocked senders",
+      "content": "Content",
+      "banners": "Banners",
+      "consent": "Photo consent",
+      "system": "System",
+      "years": "Academic years",
+      "roster": "Student roster",
+      "users": "Users & permissions",
+      "data": "Data & reset",
+      "setup": "Settings",
+      "security": "Security",
+      "site": "View site"
+    },
+    "top": {
+      "home": "Back office",
+      "breadcrumb": "You are here",
+      "menu": "Open menu",
+      "close": "Close",
+      "yearOption": "Year {be} ({ce})",
+      "search": "Search",
+      "searchHint": "Search pages, or content titles of the selected year…",
+      "searchEmpty": "Nothing found",
+      "searchPages": "Pages",
+      "searchContent": "Content",
+      "notifications": "Notifications",
+      "notificationsEmpty": "Nothing new",
+      "account": "Account",
+      "signOut": "Sign out",
+      "edit": "Edit",
+      "create": "New",
+      "new": "new",
+      "unread": "{n} unread messages",
+      "pending": "{n} items waiting to be published",
+      "events": "{n} security events in 24 hours"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "moderator": "Moderator",
+      "viewer": "Viewer"
+    },
+    "perms": {
+      "stats_view": "View statistics",
+      "messages_read": "Read council voice messages",
+      "messages_identity_view": "See who sent a message",
+      "messages_delete": "Delete messages",
+      "senders_block": "Block / unblock senders and flagged words",
+      "roster_import": "Import the student roster",
+      "content_edit": "Edit and publish content",
+      "years_manage": "Manage academic years",
+      "banners_edit": "Manage banners",
+      "consent_view": "Photo / IG consent",
+      "users_manage": "Manage users and permissions",
+      "data_export": "Export data (CSV)",
+      "data_reset_view": "View stored data and resets",
+      "security_view": "View security and the audit log",
+      "settings_edit": "System settings"
+    },
+    "overview": {
+      "lead": "Statistics, messages and the content of the selected year in one place",
+      "denied": "This account may not open that page",
+      "inbox": "Inbox",
+      "unread": "Unread",
+      "flagged": "Flagged (unread)",
+      "content": "Content of year {be} ({ce})",
+      "published": "on the site",
+      "pending": "{n} waiting",
+      "other": "{n} other",
+      "quick": "Quick actions",
+      "actions": {
+        "newAnnouncement": "New announcement",
+        "newActivity": "New activity",
+        "readMessages": "Read new messages",
+        "banners": "Manage banners",
+        "export": "Export data"
+      }
+    },
+    "charts": {
+      "table": "Show as table",
+      "chart": "Show as chart",
+      "day": "Day",
+      "weekday": "Day",
+      "weekdays": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      },
+      "heatmap": "When people visit (day × hour)",
+      "heatmapNote": "Bangkok time · darker = more",
+      "heatmapEmpty": "Hourly data is collected since 11 Nov 2026 — it appears as visits come in",
+      "hourFormat": "{h}:00",
+      "room": "Room {room}",
+      "roomsTitle": "By room · {grade}",
+      "roomsHint": "Tap a grade's bar to see its rooms",
+      "noRooms": "No room data",
+      "showRooms": "Show rooms of {grade}"
+    },
+    "blocked": {
+      "lead": "Senders blocked from council voice, and the words that flag a message",
+      "hidden": "(identity hidden — needs the sender-identity permission)"
+    },
+    "audit": {
+      "title": "Back-office audit log",
+      "keep": "kept 1 year",
+      "filters": "Log filters",
+      "actor": "Who",
+      "action": "Action",
+      "all": "All",
+      "allOf": "All {family}",
+      "from": "From",
+      "to": "To",
+      "apply": "Filter",
+      "clear": "Clear",
+      "error": "Could not load the log",
+      "target": "Target",
+      "details": "Details",
+      "page": "Page {page} of {pages}",
+      "prev": "Previous",
+      "next": "Next",
+      "families": {
+        "auth": "Sign-in",
+        "user": "Users & permissions",
+        "content": "Content",
+        "message": "Messages",
+        "sender": "Senders",
+        "words": "Flagged words",
+        "data": "Data",
+        "roster": "Roster",
+        "year": "Years",
+        "banner": "Banners",
+        "consent": "Consent",
+        "role": "Database role"
+      },
+      "actions": {
+        "auth.login": "Signed in",
+        "auth.logout": "Signed out",
+        "auth.logout.all": "Signed out everywhere",
+        "auth.bypass.issue": "Rate-limit bypass issued",
+        "user.invite": "Invited a user",
+        "user.role": "Changed a role",
+        "user.permissions": "Changed extra permissions",
+        "user.disable": "Disabled an account",
+        "user.enable": "Enabled an account",
+        "user.remove": "Removed a user",
+        "user.shared": "Shared-account flag",
+        "user.bootstrap": "Owner created from ADMIN_EMAILS",
+        "content.create": "Created content",
+        "content.update": "Edited content",
+        "content.publish": "Published content",
+        "content.reject": "Rejected content",
+        "content.hide": "Hid content",
+        "content.delete": "Deleted content",
+        "message.identity": "Viewed sender identities",
+        "message.delete": "Deleted a message",
+        "sender.block": "Blocked a sender",
+        "sender.unblock": "Unblocked a sender",
+        "words.add": "Added flagged words",
+        "words.remove": "Removed a flagged word",
+        "data.export": "Exported data",
+        "roster.import": "Imported the roster",
+        "year.add": "Added a year",
+        "year.current": "Set the current year",
+        "banner.show": "Showed a banner",
+        "banner.hide": "Hid a banner",
+        "banner.delete": "Deleted a banner photo",
+        "consent.photo": "Photo consent",
+        "consent.photo.all": "Photo consent (whole year)",
+        "consent.ig": "IG consent",
+        "consent.ig.all": "IG consent (whole year)",
+        "role.sync": "Database role synced"
+      }
+    },
+    "users": {
+      "title": "Users & permissions",
+      "lead": "Google accounts that may use the back office, their role and extra permissions. Other @utd.ac.th addresses can sign in but get no back office. Every change is logged.",
+      "email": "Google email",
+      "role": "Role",
+      "shared": "Shared by several people",
+      "invite": "Invite",
+      "inviteHelp": "The invited person can sign in with Google using this address right away. Only an owner can give the owner role.",
+      "you": "you",
+      "sharedBadge": "shared",
+      "disabled": "disabled",
+      "lastLogin": "last sign-in {date}",
+      "neverLoggedIn": "never signed in",
+      "addedBy": "added by {by}",
+      "enable": "Enable",
+      "disable": "Disable",
+      "markShared": "Mark shared",
+      "unmarkShared": "Not shared",
+      "confirmRemove": "Confirm remove",
+      "cancel": "Cancel",
+      "remove": "Remove",
+      "removeOf": "Remove {email}",
+      "permissions": "Permissions ({n})",
+      "extraLegend": "Extra permissions of {email}",
+      "fromRole": "from role",
+      "saved": "Saved",
+      "errors": {
+        "forbidden": "This account may not manage users",
+        "ownerOnly": "Only an owner can change an owner",
+        "lastOwner": "There must be at least one active owner",
+        "self": "You cannot change the role of, disable or remove your own account",
+        "badRole": "Unknown role",
+        "badPermission": "Unknown permission",
+        "badEmail": "Invalid email",
+        "exists": "This address is already listed",
+        "saveFailed": "Could not save, try again",
+        "notFound": "Account not found",
+        "badRequest": "Bad request"
+      }
+    },
+    "data": {
+      "title": "Data & reset",
+      "lead": "Export data as CSV and see what is stored and for how long",
+      "export": {
+        "title": "Export",
+        "note": "every export is logged",
+        "content": "Content of year {be}",
+        "visits": "Visit statistics, 90 days",
+        "messages": "Council voice messages (no sender identity)",
+        "messagesIdentity": "Council voice messages (with sender identity)",
+        "audit": "Back-office audit log"
+      },
+      "reset": {
+        "title": "Stored data and clean-up",
+        "lead": "Rows now and how long each part is kept",
+        "store": "Data",
+        "rows": "Rows",
+        "keep": "Kept",
+        "tables": {
+          "visit_stats": "Daily visit counts",
+          "visit_uniques": "Unique visitors (hashes)",
+          "voice_messages": "Council voice messages",
+          "voice_blocks": "Sender blocks",
+          "student_roster": "Student roster",
+          "security_events": "Security events",
+          "admin_audit": "Back-office audit log"
+        },
+        "keeps": {
+          "visits90": "removed automatically after 90 days",
+          "manual": "kept until deleted",
+          "roster": "replaced on every import",
+          "year1": "removed automatically after 1 year"
+        },
+        "how": "This page deletes nothing. A full reset of a part is done by an owner in the Supabase database (export first)."
+      }
     }
   }
 }

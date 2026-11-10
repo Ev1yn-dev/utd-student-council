@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
   const user = data.user;
   const email = normalizeEmail(user?.email);
 
-  // Enforced HERE on the server (lib/env.ts decideAccess): Google-verified address that is in ADMIN_EMAILS, an active
-  // allowed_users row, or on the school domain (no role yet -> /pending-access). Anything else is logged out at once.
-  const access = user && email && user.email_confirmed_at != null ? await resolveAccess(user.id, email, googleVerified(user)) : "denied";
+  // Enforced HERE on the server (lib/env.ts decideAccess): Google-verified address with an active admin_users row,
+  // listed in ADMIN_EMAILS (first sign-in -> owner), or on the school domain (no role yet -> /pending-access).
+  // Anything else is logged out at once.
+  const access = user && email && user.email_confirmed_at != null ? (await resolveAccess(user.id, email, googleVerified(user))).access : "denied";
   if (!user || access === "denied") {
     await sb.auth.signOut();
     return NextResponse.redirect(`${origin}/login?error=domain`);
@@ -29,15 +30,15 @@ export async function GET(req: NextRequest) {
 
   await syncProfile(user.id, email);
   // ip hash + user agent are added by audit() (shared accounts are used by several people)
-  await audit({ id: user.id, email }, "login", undefined, undefined, { access });
-  const res = NextResponse.redirect(`${origin}${access === "pending" ? "/pending-access" : "/dashboard"}`);
-  // administrators (ADMIN_EMAILS, verified just above by Supabase + Google): signed cookie that skips the app's own
-  // rate limits on every path for 12 h (lib/rl-bypass.ts)
-  const bypass = access === "admin" ? issueBypass(email) : null;
+  await audit({ email }, "auth.login", email, { role: access });
+  const res = NextResponse.redirect(`${origin}${access === "pending" ? "/pending-access" : "/admin"}`);
+  // back-office accounts (verified just above by Supabase + Google + admin_users): signed cookie that skips the app's
+  // own rate limits and the public pages' copy / DevTools blocking for 12 h (lib/rl-bypass.ts)
+  const bypass = access !== "pending" ? issueBypass(email) : null;
   if (bypass) {
     res.cookies.set(rlBypassCookie(bypass));
-    res.cookies.set(noProtectHint()); // the public pages stop the copy / DevTools blocking for this browser
-    await audit({ id: user.id, email }, "rl_bypass:issue", undefined, undefined, { ttl_h: RL_BYPASS_TTL_SEC / 3600 });
+    res.cookies.set(noProtectHint());
+    await audit({ email }, "auth.bypass.issue", email, { ttl_h: RL_BYPASS_TTL_SEC / 3600 });
   }
   return res;
 }

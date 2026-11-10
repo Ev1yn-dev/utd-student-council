@@ -17,7 +17,7 @@ function ErrorText({ error }: { error?: string }) {
 }
 
 /** Read / unread, delete (two-step confirm) and block-sender controls for one message. */
-export function MessageControls({ id, read, canBlock }: { id: string; read: boolean; canBlock: boolean }) {
+export function MessageControls({ id, read, canBlock, canDelete }: { id: string; read: boolean; canBlock: boolean; canDelete: boolean }) {
   const t = useTranslations("inbox");
   const [pending, start] = useTransition();
   const [confirm, setConfirm] = useState(false);
@@ -48,7 +48,7 @@ export function MessageControls({ id, read, canBlock }: { id: string; read: bool
           </button>
         )}
         {block.ok && <span className="rounded-full bg-danger/10 px-3 py-1 text-xs font-medium text-danger">{t("blockedOk")}</span>}
-        {confirm ? (
+        {!canDelete ? null : confirm ? (
           <>
             <button type="button" className={`${btn} border-danger bg-danger text-white hover:bg-danger/90`} disabled={pending} onClick={() => run(() => deleteMessageAction(id))}>
               <Trash2 {...ICON} />

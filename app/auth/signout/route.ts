@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const { data } = await db.auth.getUser();
     await db.auth.signOut({ scope: global ? "global" : "local" });
     if (global && data.user) await logSecurity("logout_all", { userId: data.user.id });
-    if (bypassEmail && data.user) await audit({ id: data.user.id, email: bypassEmail }, "rl_bypass:clear");
+    if (data.user?.email) await audit({ email: data.user.email }, global ? "auth.logout.all" : "auth.logout", data.user.email, bypassEmail ? { bypassCleared: true } : {});
   }
   const res = NextResponse.redirect(`${SITE_URL}/`, { status: 303 });
   // Set-Cookie with one name per path: the old per-path cookies are cleared one response header each

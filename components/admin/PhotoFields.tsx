@@ -4,7 +4,7 @@ import imageCompression from "browser-image-compression";
 import { Reorder } from "motion/react";
 import { useTranslations } from "next-intl";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { createUploadUrl, finalizeUpload } from "@/app/[locale]/dashboard/actions";
+import { createUploadUrl, finalizeUpload } from "@/app/actions/content";
 import { IconClose, IconImages, IconReset } from "@/components/icons/Icon";
 import type { FormPhoto } from "@/lib/admin/data";
 import { sniffImage } from "@/lib/image-sniff";

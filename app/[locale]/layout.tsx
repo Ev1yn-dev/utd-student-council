@@ -43,8 +43,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 // Back-office namespaces stay on the server for public pages (~22 KB per language less in every page's payload);
-// app/[locale]/admin and app/[locale]/dashboard add them back with components/i18n/AllMessages.tsx.
-const BACK_OFFICE = new Set(["dashboard", "setup", "inbox", "stats", "roster", "security", "users"]);
+// app/[locale]/admin adds them back with components/i18n/AllMessages.tsx.
+const BACK_OFFICE = new Set(["admin", "dashboard", "setup", "inbox", "stats", "roster", "security"]);
 const publicMessages = (m: Record<string, unknown>) => Object.fromEntries(Object.entries(m).filter(([k]) => !BACK_OFFICE.has(k)));
 
 export const viewport: Viewport = { themeColor: "#0b1f4d", colorScheme: "light" };

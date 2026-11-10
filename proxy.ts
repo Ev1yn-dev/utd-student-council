@@ -6,7 +6,7 @@ import {
 } from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { clientIp } from "@/lib/client-ip";
-import { SUPABASE_URL, isAdminUser, supabaseConfigured } from "@/lib/env";
+import { SUPABASE_URL, normalizeEmail, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
 import { RL_BYPASS_COOKIE, ipAllowlisted, issueBypass, noProtectHint, rlBypassCookie, verifyBypass } from "@/lib/rl-bypass";
 import { auditBypass, logSecurity } from "@/lib/security-log";
@@ -17,16 +17,33 @@ const isDev = process.env.NODE_ENV === "development";
 const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
 
 // Sign-in, back office and APIs: rendered per request (session), nonce CSP, rate limits, never cached.
-const DYNAMIC = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login)(\/|$)|^\/(auth|api)(\/|$)/;
+const DYNAMIC = /^(?:\/(?:th|en))?\/(admin|pending-access|login)(\/|$)|^\/(auth|api)(\/|$)/;
 // ...of which these need a session (role is checked again server-side in every page/action)
-const PRIVATE = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access)(\/|$)/;
-const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)|^\/api(\/|$)/;
+const PRIVATE = /^(?:\/(?:th|en))?\/(admin|pending-access)(\/|$)/;
+const NOINDEX = /^(?:\/(?:th|en))?\/(admin|pending-access|login|auth)(\/|$)|^\/api(\/|$)/;
 // Sign-in and back office only work on the primary domain (auth cookies, Google redirect URI).
-const PRIMARY_ONLY = /^(?:\/(?:th|en))?\/(login|admin|dashboard|pending-access)(\/|$)|^\/auth(\/|$)/;
+const PRIMARY_ONLY = /^(?:\/(?:th|en))?\/(login|admin|pending-access)(\/|$)|^\/auth(\/|$)/;
 // Not pages: route handlers and files keep their unprefixed paths.
 const NOT_PAGE = /^\/(api|auth|_hp)(\/|$)|\.[a-z0-9]+$/i;
 const HOME = /^\/(th|en)\/?$/;
 const intl = createIntlMiddleware(routing);
+
+/**
+ * Whether an address is an active back-office account (public.admin_users, service role over PostgREST). Asked only
+ * when it matters: issuing the bypass cookie on a back-office page, and when a rate limit is hit with one.
+ */
+async function activeAdmin(email: string): Promise<boolean> {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_URL || !key || !email) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/admin_users?select=email&disabled=eq.false&email=eq.${encodeURIComponent(normalizeEmail(email))}`, {
+      headers: { apikey: key, authorization: `Bearer ${key}` }, cache: "no-store", signal: AbortSignal.timeout(2000),
+    });
+    return r.ok && ((await r.json()) as unknown[]).length === 1;
+  } catch {
+    return false;
+  }
+}
 
 /** Per-request nonce CSP for dynamic pages (sign-in, back office). */
 function csp(nonce: string) {
@@ -179,8 +196,10 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
       const bucket = pathname.startsWith("/auth/google") ? "authStart" : pathname.startsWith("/auth/") ? "authCallback" : pathname.startsWith("/api/") ? "api" : "page";
       const r = await limit(bucket, ip);
       if (!r.ok) {
-        // skipped for an administrator's signed rl_bypass cookie (any path) and for RATE_LIMIT_ALLOW_IPS
-        const admin = verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value);
+        // skipped for a back-office account's signed rl_bypass cookie (any path; the account must still be active)
+        // and for RATE_LIMIT_ALLOW_IPS
+        const signed = verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value);
+        const admin = signed && (await activeAdmin(signed)) ? signed : null;
         if (admin) {
           void auditBypass(admin, { ip, path: pathname, rule: bucket });
         } else if (ipAllowlisted(ip)) {
@@ -241,9 +260,9 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
       to.search = "";
       return NextResponse.redirect(to);
     }
-    // administrator verified by the Auth server just above, without a site-wide bypass cookie yet (cookies issued
-    // before it covered every path): issue one, so /api, the voice form and the rest of the back office skip the limits
-    if (isAdminUser(user) && !verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value)) {
+    // back-office account verified by the Auth server just above, without a bypass cookie yet: issue one, so /api,
+    // the voice form and the rest of the back office skip the limits and the public pages' copy / DevTools blocking
+    if (user.email && !verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value) && (await activeAdmin(user.email))) {
       const value = issueBypass(user.email!);
       if (value) {
         res.cookies.set(rlBypassCookie(value));

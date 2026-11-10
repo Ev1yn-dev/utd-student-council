@@ -13,7 +13,7 @@ export default async function PendingAccessPage({ params }: { params: Promise<{ 
   const t = await getTranslations({ locale, namespace: "auth" });
   const s = await getSession();
   if (!s) return redirect({ href: "/login", locale });
-  if (s.role) return redirect({ href: "/dashboard", locale });
+  if (s.role) return redirect({ href: "/admin", locale });
   return (
     <div className="space-y-5">
       <Illustration name="pending" className="h-28 w-auto" />

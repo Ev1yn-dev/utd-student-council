@@ -40,10 +40,22 @@ const nextConfig: NextConfig = {
       ["/members", "?tab=council"], ["/team", "?tab=council"], ["/council", "?tab=council"], ["/about", "?tab=council"],
       ["/policies", "?tab=policy"], ["/advisors", "?tab=advisor"],
     ];
-    return old.flatMap(([from, q]) => [
-      { source: from, destination: `/${q}`, permanent: true },
-      { source: `/:locale(th|en)${from}`, destination: `/:locale${q}`, permanent: true },
-    ]);
+    // the second back office (/dashboard) was merged into /admin: its URLs answer 308 to the new ones (query kept)
+    const ENTITY = ":entity(announcements|activities|policies|members|advisors)";
+    const dashboard: [string, string][] = [
+      ["/dashboard", "/admin"], ["/dashboard/hero", "/admin/banners"], ["/dashboard/consent", "/admin/consent"], ["/dashboard/years", "/admin/years"],
+      [`/dashboard/${ENTITY}`, "/admin/content/:entity"], [`/dashboard/${ENTITY}/:id`, "/admin/content/:entity/:id"],
+    ];
+    return [
+      ...old.flatMap(([from, q]) => [
+        { source: from, destination: `/${q}`, permanent: true },
+        { source: `/:locale(th|en)${from}`, destination: `/:locale${q}`, permanent: true },
+      ]),
+      ...dashboard.flatMap(([from, to]) => [
+        { source: from, destination: to, permanent: true },
+        { source: `/:locale(th|en)${from}`, destination: `/:locale${to}`, permanent: true },
+      ]),
+    ];
   },
   async headers() {
     // public pages: Vercel's CDN may keep them 10 min (it sits behind proxy.ts, so the gate still runs). Cloudflare

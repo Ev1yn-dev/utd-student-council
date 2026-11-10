@@ -1,38 +1,66 @@
 import "server-only";
+import type { AdminAccount, AdminRole } from "@/lib/admin/permissions";
 import { normalizeEmail } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
 
-// public.allowed_users: who gets a back-office role (ADMIN_EMAILS aside). Read / written with the service role after
-// the caller was checked to be an admin; the table itself is closed to every token (RLS, no policies).
+// public.admin_users: who may use the back office, with which role and extra permissions. Read / written with the
+// service role after the caller passed users.manage (app/actions/users.ts); the table is closed to every token.
 
-export type AllowedUser = { email: string; role: "council" | "teacher"; active: boolean; shared: boolean; createdAt: string; createdBy: string | null };
+export type AdminUser = AdminAccount & { shared: boolean; createdAt: string; createdBy: string | null; lastLogin: string | null };
 export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-export async function listAllowed(): Promise<AllowedUser[]> {
-  const { data } = await adminClient().from("allowed_users").select("email,role,active,shared,created_at,created_by").order("created_at");
-  return (data ?? []).map((r) => ({
-    email: r.email as string, role: r.role as AllowedUser["role"], active: !!r.active, shared: !!r.shared,
-    createdAt: r.created_at as string, createdBy: (r.created_by as string | null) ?? null,
-  }));
+type Row = { email: string; role: AdminRole; extra_permissions: string[] | null; disabled: boolean; shared: boolean; created_at: string; created_by: string | null };
+const toUser = (r: Row, lastLogin: string | null = null): AdminUser => ({
+  email: r.email, role: r.role, extra: r.extra_permissions ?? [], disabled: !!r.disabled, shared: !!r.shared,
+  createdAt: r.created_at, createdBy: r.created_by ?? null, lastLogin,
+});
+const COLS = "email,role,extra_permissions,disabled,shared,created_at,created_by";
+
+export async function listAdminUsers(): Promise<AdminUser[]> {
+  const db = adminClient();
+  const [{ data }, { data: profiles }] = await Promise.all([
+    db.from("admin_users").select(COLS).order("created_at"),
+    db.from("profiles").select("email,last_login_at").not("email", "is", null),
+  ]);
+  const seen = new Map((profiles ?? []).map((p) => [p.email as string, (p.last_login_at as string | null) ?? null]));
+  return ((data ?? []) as Row[]).map((r) => toUser(r, seen.get(r.email) ?? null));
 }
 
-/** Adds an address (or updates role / shared of an existing one and switches it back on). */
-export async function upsertAllowed(email: string, role: AllowedUser["role"], shared: boolean, by: string) {
-  const e = normalizeEmail(email);
-  const { error } = await adminClient().from("allowed_users")
-    .upsert({ email: e, role, shared, active: true, created_by: by }, { onConflict: "email" });
-  if (error) throw new Error(error.message);
-  return e;
+export async function getAdminUser(email: string): Promise<AdminUser | null> {
+  const { data } = await adminClient().from("admin_users").select(COLS).eq("email", normalizeEmail(email)).maybeSingle();
+  return data ? toUser(data as Row) : null;
 }
 
-export async function updateAllowed(email: string, patch: Partial<Pick<AllowedUser, "active" | "shared" | "role">>) {
-  const { error, count } = await adminClient().from("allowed_users").update(patch, { count: "exact" }).eq("email", normalizeEmail(email));
-  if (error) throw new Error(error.message);
-  if (!count) throw new Error("not found");
+export async function activeOwnerCount(): Promise<number> {
+  const { count } = await adminClient().from("admin_users").select("email", { count: "exact", head: true }).eq("role", "owner").eq("disabled", false);
+  return count ?? 0;
 }
 
-/** Shared accounts that can sign in now — flagged on /admin/setup. */
+/** "lastOwner" when the database trigger refused the change (migration 0019), else the error is thrown. */
+function check(error: { code?: string; message: string } | null) {
+  if (!error) return null;
+  if (error.code === "P0001" && /last owner/.test(error.message)) return "lastOwner" as const;
+  if (error.code === "23505") return "exists" as const;
+  throw new Error(error.message);
+}
+
+export async function insertAdminUser(email: string, role: AdminRole, shared: boolean, by: string) {
+  const { error } = await adminClient().from("admin_users").insert({ email: normalizeEmail(email), role, shared, created_by: by });
+  return check(error);
+}
+
+export async function updateAdminUser(email: string, patch: Partial<{ role: AdminRole; extra_permissions: string[]; disabled: boolean; shared: boolean }>) {
+  const { error } = await adminClient().from("admin_users").update(patch).eq("email", normalizeEmail(email));
+  return check(error);
+}
+
+export async function deleteAdminUser(email: string) {
+  const { error } = await adminClient().from("admin_users").delete().eq("email", normalizeEmail(email));
+  return check(error);
+}
+
+/** Shared accounts that can sign in now — flagged on the settings page. */
 export async function activeSharedAccounts() {
-  const { data } = await adminClient().from("allowed_users").select("email").eq("shared", true).eq("active", true);
+  const { data } = await adminClient().from("admin_users").select("email").eq("shared", true).eq("disabled", false);
   return (data ?? []).map((r) => r.email as string);
 }

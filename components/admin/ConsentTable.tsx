@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
-import { setIgConsent, setIgConsentAll, setPhotoConsent, setPhotoConsentAll } from "@/app/[locale]/dashboard/actions";
+import { setIgConsent, setIgConsentAll, setPhotoConsent, setPhotoConsentAll } from "@/app/actions/content";
 import { toast } from "@/components/admin/live";
 import { useRouter } from "@/i18n/navigation";
 import type { ConsentRow } from "@/lib/admin/consent";

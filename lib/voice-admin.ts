@@ -2,7 +2,7 @@ import "server-only";
 import { STUDENT_ID } from "@/lib/roster-csv";
 import { adminClient } from "@/lib/supabase/admin";
 
-// Council voice moderation (migration 0017). Admin pages/actions call these only after authorize(["admin"]).
+// Council voice moderation (migration 0017). Pages/actions call these only after requirePermission / authorizePermission.
 // Nothing here logs names, IDs or message text.
 
 export type MessageRow = {
@@ -31,7 +31,8 @@ const COLS = "id,ref_code,category,message,anonymous,status,created_at,read_at,f
 /** Search text safe inside a quoted PostgREST or() value: syntax characters and LIKE wildcards removed. */
 const searchTerm = (q: string) => q.replace(/[,()*:"'\\%_]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 
-export async function listMessages(f: MessageFilters) {
+/** `identity` = the caller has messages.identity.view: only then can the search match sender names or student IDs. */
+export async function listMessages(f: MessageFilters, identity: boolean) {
   let query = adminClient().from("voice_messages").select(COLS, { count: "exact" }).order("created_at", { ascending: false });
   if (f.grade) query = query.eq("grade", f.grade);
   if (f.room) query = query.eq("sender_room", f.room);
@@ -43,8 +44,9 @@ export async function listMessages(f: MessageFilters) {
   const q = f.q ? searchTerm(f.q) : "";
   if (q) {
     const like = `"*${q}*"`;
-    const ors = [`message.ilike.${like}`, `sender_first_name.ilike.${like}`, `sender_last_name.ilike.${like}`, `ref_code.ilike.${like}`];
-    if (STUDENT_ID.test(q)) ors.push(`student_id.eq.${q}`);
+    const ors = [`message.ilike.${like}`, `ref_code.ilike.${like}`];
+    if (identity) ors.push(`sender_first_name.ilike.${like}`, `sender_last_name.ilike.${like}`);
+    if (identity && STUDENT_ID.test(q)) ors.push(`student_id.eq.${q}`);
     query = query.or(ors.join(","));
   }
   const fromRow = (f.page - 1) * PAGE_SIZE;

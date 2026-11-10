@@ -7,6 +7,7 @@ export default async function globalTeardown() {
   const { data: list } = await db.auth.admin.listUsers({ perPage: 1000 });
   const users = (list?.users ?? []).filter((u) => u.email === ADMIN || u.email === COUNCIL);
   const ids = users.map((u) => u.id);
+  const emails = [ADMIN, COUNCIL];
   if (!ids.length) return;
   for (const t of ["announcements", "activities", "policies", "members", "advisors"]) await db.from(t).delete().in("author_id", ids);
   const { data: photos } = await db.from("photos").select("id").in("uploaded_by", ids);
@@ -14,10 +15,11 @@ export default async function globalTeardown() {
   if (paths.length) await Promise.all([db.storage.from("public").remove(paths), db.storage.from("pending").remove(paths)]);
   await db.from("photos").delete().in("uploaded_by", ids);
   await db.from("academic_years").delete().gte("year", 2690); // test years only
-  await db.from("audit_logs").delete().in("actor_id", ids);
-  await db.from("audit_logs").delete().eq("action", "role.change").in("target_id", ids);
+  await db.from("admin_audit").delete().in("actor_email", emails);
+  await db.from("admin_audit").delete().in("target", emails);
   await db.from("security_events").delete().in("user_id", ids);
   await db.from("profiles").delete().in("id", ids);
-  await db.from("allowed_users").delete().eq("created_by", "e2e");
+  await db.from("admin_users").delete().eq("created_by", "e2e");
+  await db.from("admin_users").delete().eq("email", ADMIN).eq("created_by", "ADMIN_EMAILS"); // bootstrap owner of the test admin
   for (const id of ids) await db.auth.admin.deleteUser(id);
 }

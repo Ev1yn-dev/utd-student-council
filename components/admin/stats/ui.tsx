@@ -1,15 +1,17 @@
 import { ChartColumn, Eye, Minus, Send, TrendingDown, TrendingUp, UserRound } from "lucide-react";
+import { Sparkline } from "@/components/admin/charts/Sparkline";
 import { ICON } from "@/components/admin/icon";
 import { Link } from "@/i18n/navigation";
 import { RANGES, type Range } from "@/lib/admin/stats";
 import { cn } from "@/lib/utils";
 
+/** Page heading: the visible title is in the top bar, so the h1 is for screen readers and the lead is shown. */
 export function PageHeader({ title, lead, children }: { title: string; lead: string; children?: React.ReactNode }) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-strong">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{lead}</p>
+        <h1 className="sr-only">{title}</h1>
+        <p className="text-sm text-muted">{lead}</p>
       </div>
       {children}
     </header>
@@ -70,16 +72,21 @@ export function delta(now: number, prev: number, t: (k: string, v?: Record<strin
 
 const CARD_ICONS = { visits: Eye, uniques: UserRound, voice: Send };
 
-export function StatCard({ label, value, change, compare, href, icon }: { label: string; value: string; change: Delta; compare: string; href: string; icon: keyof typeof CARD_ICONS }) {
+export function StatCard({ label, value, change, compare, href, icon, spark, tone }: {
+  label: string; value: string; change: Delta; compare: string; href: string; icon: keyof typeof CARD_ICONS; spark?: number[]; tone?: string;
+}) {
   const Icon = change.kind === "down" ? TrendingDown : change.kind === "same" ? Minus : TrendingUp;
   const CardIcon = CARD_ICONS[icon];
   return (
-    <Link href={href} className="block rounded-[20px] border border-line bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
+    <Link href={href} className="block rounded-[20px] border border-line bg-surface p-5 shadow-soft transition duration-150 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:transition-none motion-reduce:hover:translate-y-0">
       <p className="flex items-center gap-2 text-sm text-muted">
         <span className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-brand-mid"><CardIcon {...ICON} /></span>
         {label}
       </p>
-      <p className="mt-1 font-display text-3xl font-semibold tabular-nums text-strong">{value}</p>
+      <div className="mt-1 flex items-end justify-between gap-3">
+        <p className="font-display text-3xl font-semibold tabular-nums text-strong">{value}</p>
+        {spark && <Sparkline data={spark} tone={tone} />}
+      </div>
       <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         <span
           className={cn(
@@ -112,7 +119,7 @@ export function BarList({ items, empty, fmt }: { items: { label: string; n: numb
             </span>
           </div>
           <div className="mt-1 h-1.5 rounded-full bg-surface-2">
-            <div className="h-1.5 rounded-full bg-[#3159c4]" style={{ width: `${Math.max(2, (i.n / max) * 100)}%` }} />
+            <div className="h-1.5 rounded-full bg-[var(--c-chart-1)]" style={{ width: `${Math.max(2, (i.n / max) * 100)}%` }} />
           </div>
         </li>
       ))}

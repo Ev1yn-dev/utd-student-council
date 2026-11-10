@@ -32,7 +32,7 @@ export function filterContent(c: YearContent, query: string) {
     activities: c.activities.filter((a) => hit(q, a.title, a.body)),
     policies: c.policies.filter((p) => hit(q, p.title, p.summary, p.owner, p.body)),
     members: c.members.filter((m) => hit(q, m.name, m.nickname, m.role, m.execTitle, m.dept, m.party, m.termNo)),
-    staff: c.staff.filter((p) => hit(q, p.name, p.nickname, p.role, p.party, p.instagram)),
+    staff: c.staff.filter((p) => hit(q, p.name, p.nickname, p.role)),
   };
 }
 

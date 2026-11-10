@@ -19,7 +19,6 @@ const EXAMPLE: Record<string, string> = {
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: "",
   TURNSTILE_SECRET_KEY: "",
   ALLOWED_EMAIL_DOMAIN: "utd.ac.th",
-  COUNCIL_EMAILS: "",
   ADMIN_EMAILS: "admin1@utd.ac.th,someone@example.com",
 };
 const exposure = (pub: boolean) => (pub ? "เปิดเผยได้ (ค่านี้ถูกส่งไปถึงเบราว์เซอร์)" : "ห้ามเปิดเผย / ห้าม commit / ห้ามส่งในแชท");
