@@ -25,8 +25,8 @@ export function councilImageLoader({ src, width }: { src: string; width: number 
  * Roster photo for the portrait frame: the introduction card (plus its 480w copy); without one, the square avatar.
  * The popup shows the card whole.
  */
-export function rosterPhoto(p: Pick<CouncilMember, "id" | "card" | "avatar">): Img {
+export function rosterPhoto(p: Pick<CouncilMember, "id" | "card" | "avatar">, card: { w: number; h: number } = CARD_SIZE): Img {
   return p.card
-    ? { id: `council-${p.id}`, w: CARD_SIZE.w, h: CARD_SIZE.h, blur: null, src: { 480: p.card.replace(/\.webp$/, "-480.webp"), 960: p.card, 1920: p.card } }
+    ? { id: `council-${p.id}`, w: card.w, h: card.h, blur: null, src: { 480: p.card.replace(/\.webp$/, "-480.webp"), 960: p.card, 1920: p.card } }
     : { id: `council-${p.id}`, w: 400, h: 400, blur: null, src: { 480: p.avatar.replace(/\.webp$/, "-256.webp"), 960: p.avatar, 1920: p.avatar } };
 }

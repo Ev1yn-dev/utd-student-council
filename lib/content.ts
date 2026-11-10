@@ -8,6 +8,7 @@ import { COUNCIL_MEMBERS, COUNCIL_YEAR, type CouncilMember } from "@/lib/council
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
 import { publicClient, publicImageUrl } from "@/lib/supabase/public";
+import leaders from "@/public/images/council/leaders.json";
 
 // Public content, scoped to one academic year. With Supabase configured it comes from approved rows
 // (RLS: anon sees status='approved' only, and never the instagram/contact columns); without it (local dev)
@@ -142,7 +143,7 @@ const toMember = (r: Row, contact: Contact): Member => {
 // ───────────────────────── council roster (src/data/council-members.json) ─────────────────────────
 
 /** Same person in both sources: spaces and the title prefix (นาย / นางสาว / นาง) are ignored. */
-const nameKey = (v: string) => v.normalize("NFC").replace(/s+/g, "").replace(/^(นางสาว|นาง|นาย)/, "");
+const nameKey = (v: string) => v.normalize("NFC").replace(/\s+/g, "").replace(/^(นางสาว|นาง|นาย)/, "");
 
 /**
  * Students from the roster file merged into the committee: a person already in the database (by name) gets the
@@ -173,6 +174,26 @@ function withRoster(members: Member[]): Member[] {
   return out;
 }
 
+/** leader introduction cards (public/images/council/leaders.json), 720×900 */
+const LEADER_CARD = { w: 720, h: 900 } as const;
+
+/**
+ * Leaders (president, vice presidents, department heads) stay database rows; their photo and popup poster come from
+ * the introduction card in public/images/council/cards instead of the stored photo, matched by name. `aliases` are
+ * misspelled names still in the database; a matched row shows the file's spelling.
+ */
+function withLeaderCards(members: Member[]): Member[] {
+  const byName = new Map(
+    leaders.leaders.flatMap((p) => [p.name, ...(p.aliases ?? [])].map((n) => [nameKey(n), p] as const)),
+  );
+  return members.map((m) => {
+    const p = byName.get(nameKey(m.name.th));
+    if (!p) return m;
+    const card = rosterPhoto({ id: p.id, card: p.card, avatar: p.avatar }, LEADER_CARD);
+    return { ...m, name: l(p.name, m.name.en), photo: card, poster: card };
+  });
+}
+
 // ───────────────────────── years ─────────────────────────
 
 export async function getYears(): Promise<{ years: number[]; current: number }> {
@@ -192,7 +213,7 @@ export async function getYearContent(requested?: number): Promise<YearContent> {
   const roster = year === COUNCIL_YEAR;
   return {
     year, years, current, ...content,
-    members: roster ? withRoster(content.members) : content.members,
+    members: roster ? withLeaderCards(withRoster(content.members)) : content.members,
     staff: roster ? COUNCIL_MEMBERS.filter((p) => p.group !== "member") : [],
   };
 }
