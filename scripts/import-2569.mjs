@@ -181,13 +181,13 @@ async function banners() {
   console.log("banners done:", meta.map((m) => `${m.name} ${m.w}x${m.h}`).join(", "));
 }
 
-// footer credit avatar: _import/lunelle.png -> public/credits/lunelle-{96,192}.{avif,webp}
+// footer credit avatar: _import/ev1yn.png -> public/credits/ev1yn-{96,192}.{avif,webp}
 async function credits() {
   mkdirSync("public/credits", { recursive: true });
   for (const n of [96, 192]) {
-    const img = sharp(`${SRC}/lunelle.png`).resize(n, n, { fit: "cover" });
-    await img.clone().avif({ quality: 60 }).toFile(`public/credits/lunelle-${n}.avif`);
-    await img.clone().webp({ quality: 82 }).toFile(`public/credits/lunelle-${n}.webp`);
+    const img = sharp(`${SRC}/ev1yn.png`).resize(n, n, { fit: "cover" });
+    await img.clone().avif({ quality: 60 }).toFile(`public/credits/ev1yn-${n}.avif`);
+    await img.clone().webp({ quality: 82 }).toFile(`public/credits/ev1yn-${n}.webp`);
   }
   console.log("credits done");
 }

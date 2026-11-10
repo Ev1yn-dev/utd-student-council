@@ -70,10 +70,10 @@ export function Footer() {
           <p className="text-xs">{t("footer.copyright", { school: t("site.school") })}</p>
           {/* creator credit: small capsule linking to the creator's site (new tab); on hover/focus it lifts 1px and an
               external-link arrow slides in (no motion with reduced motion); focus ring comes from the global :focus-visible */}
-          <a href="https://ev1yn-bio.vercel.app" target="_blank" rel="noopener noreferrer" aria-label={t("footer.school.creditAria")} className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 py-1 pl-1 pr-3 text-[0.72rem] text-on-brand/75 no-underline transition duration-150 motion-reduce:transition-none motion-safe:hover:-translate-y-px motion-safe:focus-visible:-translate-y-px hover:border-pink-400/60 hover:text-on-brand focus-visible:border-pink-400/60 focus-visible:text-on-brand">
+          <a href="https://ev1yn.online" target="_blank" rel="noopener noreferrer" aria-label={t("footer.school.creditAria")} className="group inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 py-1 pl-1 pr-3 text-[0.72rem] text-on-brand/75 no-underline transition duration-150 motion-reduce:transition-none motion-safe:hover:-translate-y-px motion-safe:focus-visible:-translate-y-px hover:border-pink-400/60 hover:text-on-brand focus-visible:border-pink-400/60 focus-visible:text-on-brand">
             <picture className="shrink-0">
-              <source type="image/avif" srcSet="/credits/lunelle-96.avif 1x, /credits/lunelle-192.avif 2x" />
-              <img src="/credits/lunelle-96.webp" srcSet="/credits/lunelle-96.webp 1x, /credits/lunelle-192.webp 2x" alt={t("footer.school.creditAlt")} width={24} height={24} className="h-6 w-6 rounded-full bg-white object-cover transition duration-300 motion-safe:group-hover:rotate-6" loading="lazy" decoding="async" />
+              <source type="image/avif" srcSet="/credits/ev1yn-96.avif 1x, /credits/ev1yn-192.avif 2x" />
+              <img src="/credits/ev1yn-96.webp" srcSet="/credits/ev1yn-96.webp 1x, /credits/ev1yn-192.webp 2x" alt={t("footer.school.creditAlt")} width={24} height={24} className="h-6 w-6 rounded-full bg-white object-cover transition duration-300 motion-safe:group-hover:rotate-6" loading="lazy" decoding="async" />
             </picture>
             <span lang="en">{t("footer.school.credit")}</span>
             <span aria-hidden className="-ml-2 inline-flex w-0 overflow-hidden opacity-0 transition-all duration-150 motion-reduce:transition-none group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100 group-focus-visible:ml-0 group-focus-visible:w-3.5 group-focus-visible:opacity-100">
