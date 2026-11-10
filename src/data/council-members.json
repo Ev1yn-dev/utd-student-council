@@ -293,8 +293,26 @@
       "avatar": "/images/council/avatars/thanyalak.webp"
     },
     {
-      "id": "thanatchaphong",
+      "id": "atsawin",
       "order": 22,
+      "group": "advisor",
+      "name": "นายอัศวิน วงศ์พุ่ม",
+      "role": "หัวหน้ากลุ่มงานส่งเสริมประชาธิปไตยในโรงเรียน และหัวหน้าครูที่ปรึกษาสภานักเรียน",
+      "card": "/images/council/cards/atsawin.webp",
+      "avatar": "/images/council/avatars/atsawin.webp"
+    },
+    {
+      "id": "niphon",
+      "order": 23,
+      "group": "advisor",
+      "name": "นายนิพนธ์ หมูทอง",
+      "role": "หัวหน้างานกิจกรรมนักเรียน และครูที่ปรึกษาสภานักเรียน",
+      "card": "/images/council/cards/niphon.webp",
+      "avatar": "/images/council/avatars/niphon.webp"
+    },
+    {
+      "id": "thanatchaphong",
+      "order": 24,
       "group": "advisor",
       "name": "นายธนัชพงศ์ บรรดิษฐ์ศักดิ์",
       "role": "ครูที่ปรึกษาสภานักเรียน",
@@ -303,7 +321,7 @@
     },
     {
       "id": "benjamas",
-      "order": 23,
+      "order": 25,
       "group": "advisor",
       "name": "นางสาวเบญจมาศ กลิ่นเชตุ",
       "role": "ครูที่ปรึกษาสภานักเรียน",
@@ -312,7 +330,7 @@
     },
     {
       "id": "bunyawan",
-      "order": 24,
+      "order": 26,
       "group": "advisor",
       "name": "นางสาวบุญญาวัลย์ จันโท",
       "role": "ครูที่ปรึกษาสภานักเรียน",
@@ -321,7 +339,7 @@
     },
     {
       "id": "nithiphat",
-      "order": 25,
+      "order": 27,
       "group": "advisor",
       "name": "นายนิธิพัฒน์ ไพเราะ",
       "role": "ครูที่ปรึกษาสภานักเรียน",
@@ -330,7 +348,7 @@
     },
     {
       "id": "nophathaikamon",
-      "order": 26,
+      "order": 28,
       "group": "advisor",
       "name": "นางสาวนพหทัยกมณ บุญอิ่ม",
       "role": "ครูที่ปรึกษาสภานักเรียน",
@@ -339,7 +357,7 @@
     },
     {
       "id": "sangwan",
-      "order": 27,
+      "order": 29,
       "group": "executive",
       "name": "นายสังวาล เอ็บมูล",
       "role": "ผู้อำนวยการโรงเรียนอุตรดิตถ์",
@@ -348,7 +366,7 @@
     },
     {
       "id": "ritthee",
-      "order": 28,
+      "order": 30,
       "group": "executive",
       "name": "นางสาวฤทธี กุลพรม",
       "role": "รองผู้อำนวยการกลุ่มบริหารบุคคล",
@@ -357,30 +375,12 @@
     },
     {
       "id": "wongkot",
-      "order": 29,
+      "order": 31,
       "group": "executive",
       "name": "นายวงกต จุลรังสี",
       "role": "หัวหน้ากลุ่มงานกิจการนักเรียน",
       "card": "/images/council/cards/wongkot.webp",
       "avatar": "/images/council/avatars/wongkot.webp"
-    },
-    {
-      "id": "niphon",
-      "order": 30,
-      "group": "executive",
-      "name": "นายนิพนธ์ หมูทอง",
-      "role": "หัวหน้างานกิจกรรมนักเรียน และครูที่ปรึกษาสภานักเรียน",
-      "card": "/images/council/cards/niphon.webp",
-      "avatar": "/images/council/avatars/niphon.webp"
-    },
-    {
-      "id": "atsawin",
-      "order": 31,
-      "group": "executive",
-      "name": "นายอัศวิน วงศ์พุ่ม",
-      "role": "หัวหน้ากลุ่มงานส่งเสริมประชาธิปไตยในโรงเรียน และหัวหน้าครูที่ปรึกษาสภานักเรียน",
-      "card": "/images/council/cards/atsawin.webp",
-      "avatar": "/images/council/avatars/atsawin.webp"
     }
   ]
 }
