@@ -1,4 +1,4 @@
-// Council structure for the back office (members table): fixed role set and departments.
+// Council structure: fixed role set, role order, and grouping members into departments.
 // Plain TypeScript (no path aliases, no JSON import) so Node can also run it directly (scripts/seed-2569.mjs, tests).
 
 // The council has no vice head (deputy head of a department).
@@ -20,4 +20,28 @@ export function roleFromTitle(title: string): CouncilRole {
   return "member";
 }
 
+export const roleRank = (r: CouncilRole) => COUNCIL_ROLES.indexOf(r);
+
 export type Department = { key: string; th: string; en: string };
+
+/** One department section: its people in role order (then stored order). */
+export type DeptSection<P> = { dept: Department; people: P[] };
+
+/**
+ * Groups people by department in the departments' order. People whose department is unknown end up in a last
+ * section with key "other". Within a section: president -> vice_president -> head -> member, ties keep their
+ * stored order (`rank`).
+ */
+export function groupByDepartment<P extends { deptKey: string | null; councilRole: CouncilRole; rank: number }>(
+  people: P[],
+  departments: Department[],
+  other: Department,
+): DeptSection<P>[] {
+  const known = new Set(departments.map((d) => d.key));
+  const sorted = [...people].sort((a, b) => roleRank(a.councilRole) - roleRank(b.councilRole) || a.rank - b.rank);
+  const sections = [...departments, other].map((dept) => {
+    const list = sorted.filter((p) => (dept === other ? !p.deptKey || !known.has(p.deptKey) : p.deptKey === dept.key));
+    return { dept, people: list };
+  });
+  return sections.filter((s) => s.people.length > 0);
+}

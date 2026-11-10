@@ -20,6 +20,7 @@ export function SmartImage({
   kind = "photo",
   priority,
   label,
+  style,
 }: {
   img: Img | null;
   alt: string;
@@ -29,6 +30,8 @@ export function SmartImage({
   kind?: "photo" | "portrait";
   priority?: boolean;
   label?: string;
+  /** extra wrapper style, e.g. an aspect-ratio taken from the image */
+  style?: React.CSSProperties;
 }) {
   const t = useTranslations("common");
   const [loaded, setLoaded] = useState(false);
@@ -58,7 +61,7 @@ export function SmartImage({
     // eslint-disable-next-line @next/next/no-img-element -- variants are pre-generated webp/avif in Supabase storage
     <img
         src={img.src[960]}
-        srcSet={img.src[480] === img.src[1920] ? `${img.src[480]} ${img.w}w` : `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`}
+        srcSet={img.src[480] === img.src[1920] ? `${img.src[480]} ${img.w}w` : img.src[960] === img.src[1920] ? `${img.src[480]} 480w, ${img.src[960]} ${img.w}w` : `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`}
         sizes={sizes}
         alt={alt}
         width={img.w}
@@ -80,7 +83,7 @@ export function SmartImage({
   return (
     <div
       className={cn("relative overflow-hidden", !loaded && !img.blur && "skeleton", className)}
-      style={img.blur ? { backgroundImage: `url(${img.blur})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+      style={img.blur ? { ...style, backgroundImage: `url(${img.blur})`, backgroundSize: "cover", backgroundPosition: "center" } : style}
     >
       {!loaded && img.blur && <div aria-hidden className="skeleton absolute inset-0 opacity-40" />}
       {/* AVIF first when the image has it (council portraits); WebP is the fallback. `contents` keeps the img

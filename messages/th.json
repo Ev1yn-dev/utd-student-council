@@ -175,12 +175,13 @@
     "clearFilters": "ล้างตัวกรอง",
     "noMatch": "ไม่มีกรรมการตรงกับตัวกรอง",
     "photoAlt": "{nickname} {role}",
-    "groups": {
-      "executive": "คณะผู้บริหาร",
-      "advisor": "ครูที่ปรึกษาสภานักเรียน",
-      "member": "สมาชิกสภานักเรียน"
+    "openCard": "ดูการ์ดแนะนำของ {name}",
+    "staff": "ครูที่ปรึกษาและผู้บริหาร",
+    "staffGroups": {
+      "executive": "ผู้บริหาร",
+      "advisor": "ครูที่ปรึกษาสภานักเรียน"
     },
-    "openCard": "ดูการ์ดแนะนำของ {name}"
+    "filterRole": "กรองตามตำแหน่ง"
   },
   "empty": {
     "notFound": "ไม่พบข้อมูลที่ค้นหา",

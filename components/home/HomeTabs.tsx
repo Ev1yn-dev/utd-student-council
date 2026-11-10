@@ -237,7 +237,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
             {tab === "news" && <NewsTab announcements={view.announcements} activities={view.activities} query={view.q} onClear={clear} />}
             {tab === "policy" && <PolicyTab policies={view.policies} query={view.q} onClear={clear} />}
             {(tab === "council" || tab === "advisor") && (
-              <PeopleTab kind={tab} people={view.people} query={view.q} onClear={clear} />
+              <PeopleTab kind={tab} members={view.members} staff={view.staff} query={view.q} onClear={clear} />
             )}
           </m.div>
         </AnimatePresence>

@@ -175,12 +175,13 @@
     "clearFilters": "Clear filters",
     "noMatch": "No council members match these filters",
     "photoAlt": "{nickname}, {role}",
-    "groups": {
-      "executive": "School Executives",
-      "advisor": "Student Council Teacher Advisors",
-      "member": "Student Council Members"
+    "openCard": "View {name}'s introduction card",
+    "staff": "Teacher Advisors and Executives",
+    "staffGroups": {
+      "executive": "Executives",
+      "advisor": "Student Council Teacher Advisors"
     },
-    "openCard": "View {name}'s introduction card"
+    "filterRole": "Filter by position"
   },
   "empty": {
     "notFound": "Nothing found",

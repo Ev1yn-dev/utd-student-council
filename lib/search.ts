@@ -21,7 +21,7 @@ const text = (f: Field): string =>
 /** Matches Thai and English versions at once, whatever language the page is shown in. */
 const hit = (q: string, ...fields: Field[]) => fields.some((f) => norm(text(f)).includes(q));
 
-/** Filters every tab at once (news title/body, policy, people name/nickname/role/department/party/IG). */
+/** Filters every tab at once (news title/body, policy, people name/nickname/positions/dept/party). */
 export function filterContent(c: YearContent, query: string) {
   const q = norm(query);
   if (!q) return { ...c, q };
@@ -31,11 +31,12 @@ export function filterContent(c: YearContent, query: string) {
     announcements: c.announcements.filter((a) => hit(q, a.title, a.body)),
     activities: c.activities.filter((a) => hit(q, a.title, a.body)),
     policies: c.policies.filter((p) => hit(q, p.title, p.summary, p.owner, p.body)),
-    people: c.people.filter((p) => hit(q, p.name, p.nickname, p.role, p.department, p.party, p.instagram)),
+    members: c.members.filter((m) => hit(q, m.name, m.nickname, m.role, m.execTitle, m.dept, m.party, m.termNo)),
+    staff: c.staff.filter((p) => hit(q, p.name, p.nickname, p.role, p.party, p.instagram)),
   };
 }
 
-/** Council tab: the whole roster (executives, advisors, students); advisor tab: the advisors only. */
-export const tabCount = (c: Pick<YearContent, "announcements" | "activities" | "policies" | "people">, t: TabKey) =>
+/** Council tab: the student committee only (executives and advisors are not counted); advisor tab: the advisors. */
+export const tabCount = (c: Pick<YearContent, "announcements" | "activities" | "policies" | "members" | "staff">, t: TabKey) =>
   t === "news" ? c.announcements.length + c.activities.length : t === "policy" ? c.policies.length
-    : t === "council" ? c.people.length : c.people.filter((p) => p.group === "advisor").length;
+    : t === "council" ? c.members.length : c.staff.filter((p) => p.group === "advisor").length;

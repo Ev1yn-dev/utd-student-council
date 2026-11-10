@@ -1,17 +1,17 @@
 {
-  "$comment": "ฝ่ายของคณะกรรมการสภานักเรียน เรียงตามลำดับที่แสดงบนหน้าเว็บ. key ใช้ผูกกับ members.dept_key. ไม่มีข้อมูลส่วนบุคคลในไฟล์นี้",
+  "$comment": "ฝ่ายของคณะกรรมการสภานักเรียน เรียงตามลำดับที่แสดงบนหน้าเว็บ. key ใช้ผูกกับ members.dept_key. aliases = ชื่ออื่นของฝ่ายเดียวกัน (เช่นใน src/data/council-members.json). ไม่มีข้อมูลส่วนบุคคลในไฟล์นี้",
   "departments": [
     { "key": "executive", "th": "บริหารสูงสุด", "en": "Executive Board" },
     { "key": "policy", "th": "นโยบายและแบบแผน", "en": "Policy and Planning" },
     { "key": "publicRelations", "th": "ประชาสัมพันธ์", "en": "Public Relations" },
     { "key": "secretariat", "th": "เลขานุการ", "en": "Secretariat" },
-    { "key": "audioVisual", "th": "โสตทัศนศึกษา", "en": "Audio-Visual Services" },
+    { "key": "audioVisual", "th": "โสตทัศนศึกษา", "en": "Audio-Visual Services", "aliases": ["โสตทัศนูปกรณ์"] },
     { "key": "activities", "th": "กิจกรรมและนันทนาการ", "en": "Activities and Recreation" },
     { "key": "discipline", "th": "ระเบียบวินัย", "en": "Discipline" },
     { "key": "treasury", "th": "เหรัญญิก", "en": "Treasury" },
     { "key": "evaluation", "th": "วัดผลและประเมินผล", "en": "Measurement and Evaluation" },
     { "key": "facilities", "th": "อาคารสถานที่และปฏิคม", "en": "Facilities and Hospitality" },
     { "key": "welfare", "th": "สวัสดิการ", "en": "Welfare" },
-    { "key": "arts", "th": "ศิลปะและวัฒนธรรม", "en": "Arts and Culture" }
+    { "key": "arts", "th": "ศิลปะและวัฒนธรรม", "en": "Arts and Culture", "aliases": ["ศิลปวัฒนธรรม"] }
   ]
 }
