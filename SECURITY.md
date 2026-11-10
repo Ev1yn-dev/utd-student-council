@@ -6,7 +6,7 @@
 Please **do not** open a public issue for security problems.
 
 รายงานแบบส่วนตัวผ่าน GitHub: แท็บ **Security → Report a vulnerability**
-([private vulnerability reporting](https://github.com/lunelledevcat/utd-student-council/security/advisories/new))
+([private vulnerability reporting](https://github.com/Ev1yn-dev/utd-student-council/security/advisories/new))
 แจ้งรายละเอียด: หน้า/ฟีเจอร์ที่เกี่ยวข้อง ขั้นตอนทำซ้ำ และผลกระทบที่คาดว่าจะเกิด
 ทีมพัฒนาจะตอบกลับโดยเร็วและแจ้งเมื่อแก้ไขแล้ว ขอให้ไม่เปิดเผยรายละเอียดจนกว่าจะแก้ไขเสร็จ
 

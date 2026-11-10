@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: รายงานช่องโหว่ด้านความปลอดภัย (Security vulnerability)
-    url: https://github.com/lunelledevcat/utd-student-council/security/advisories/new
+    url: https://github.com/Ev1yn-dev/utd-student-council/security/advisories/new
     about: รายงานแบบส่วนตัว — อย่าเปิด issue สาธารณะ
