@@ -1,17 +1,17 @@
 {
-  "$comment": "ฝ่ายของคณะกรรมการสภานักเรียน เรียงตามลำดับที่แสดงบนหน้าเว็บ. key ใช้ผูกกับ members.dept_key. pendingDeputies = จำนวนการ์ด 'รอประกาศ' (รองหัวหน้าฝ่าย) ที่แสดงเมื่อฝ่ายนั้นยังไม่มีรองหัวหน้าฝ่าย (0 = ไม่แสดง). ไม่มีข้อมูลส่วนบุคคลในไฟล์นี้",
+  "$comment": "ฝ่ายของคณะกรรมการสภานักเรียน เรียงตามลำดับที่แสดงบนหน้าเว็บ. key ใช้ผูกกับ members.dept_key. ไม่มีข้อมูลส่วนบุคคลในไฟล์นี้",
   "departments": [
-    { "key": "executive", "th": "บริหารสูงสุด", "en": "Executive Board", "pendingDeputies": 0 },
-    { "key": "policy", "th": "นโยบายและแบบแผน", "en": "Policy and Planning", "pendingDeputies": 1 },
-    { "key": "publicRelations", "th": "ประชาสัมพันธ์", "en": "Public Relations", "pendingDeputies": 1 },
-    { "key": "secretariat", "th": "เลขานุการ", "en": "Secretariat", "pendingDeputies": 1 },
-    { "key": "audioVisual", "th": "โสตทัศนศึกษา", "en": "Audio-Visual Services", "pendingDeputies": 1 },
-    { "key": "activities", "th": "กิจกรรมและนันทนาการ", "en": "Activities and Recreation", "pendingDeputies": 1 },
-    { "key": "discipline", "th": "ระเบียบวินัย", "en": "Discipline", "pendingDeputies": 1 },
-    { "key": "treasury", "th": "เหรัญญิก", "en": "Treasury", "pendingDeputies": 1 },
-    { "key": "evaluation", "th": "วัดผลและประเมินผล", "en": "Measurement and Evaluation", "pendingDeputies": 1 },
-    { "key": "facilities", "th": "อาคารสถานที่และปฏิคม", "en": "Facilities and Hospitality", "pendingDeputies": 1 },
-    { "key": "welfare", "th": "สวัสดิการ", "en": "Welfare", "pendingDeputies": 1 },
-    { "key": "arts", "th": "ศิลปะและวัฒนธรรม", "en": "Arts and Culture", "pendingDeputies": 1 }
+    { "key": "executive", "th": "บริหารสูงสุด", "en": "Executive Board" },
+    { "key": "policy", "th": "นโยบายและแบบแผน", "en": "Policy and Planning" },
+    { "key": "publicRelations", "th": "ประชาสัมพันธ์", "en": "Public Relations" },
+    { "key": "secretariat", "th": "เลขานุการ", "en": "Secretariat" },
+    { "key": "audioVisual", "th": "โสตทัศนศึกษา", "en": "Audio-Visual Services" },
+    { "key": "activities", "th": "กิจกรรมและนันทนาการ", "en": "Activities and Recreation" },
+    { "key": "discipline", "th": "ระเบียบวินัย", "en": "Discipline" },
+    { "key": "treasury", "th": "เหรัญญิก", "en": "Treasury" },
+    { "key": "evaluation", "th": "วัดผลและประเมินผล", "en": "Measurement and Evaluation" },
+    { "key": "facilities", "th": "อาคารสถานที่และปฏิคม", "en": "Facilities and Hospitality" },
+    { "key": "welfare", "th": "สวัสดิการ", "en": "Welfare" },
+    { "key": "arts", "th": "ศิลปะและวัฒนธรรม", "en": "Arts and Culture" }
   ]
 }

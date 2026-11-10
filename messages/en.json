@@ -167,17 +167,20 @@
       "president": "Chairperson",
       "vice_president": "Vice Chairperson",
       "head": "Head",
-      "deputy_head": "Deputy Head",
       "member": "Member"
     },
     "deptHeading": "{name}",
     "otherDept": "Other",
-    "tba": "To be announced",
-    "filterRole": "Filter by position",
     "filterDept": "Filter by department",
     "clearFilters": "Clear filters",
     "noMatch": "No council members match these filters",
-    "photoAlt": "{nickname}, {role}"
+    "photoAlt": "{nickname}, {role}",
+    "groups": {
+      "executive": "School Executives",
+      "advisor": "Student Council Teacher Advisors",
+      "member": "Student Council Members"
+    },
+    "openCard": "View {name}'s introduction card"
   },
   "empty": {
     "notFound": "Nothing found",
@@ -496,7 +499,7 @@
         "sort_order": "Orders people with the same role in the same department (lower first)",
         "instagram": "Username only, e.g. utd_council",
         "consent_public": "Unticked = IG / contact never shown on the site",
-        "council_role": "The card tag and the order within the department come from this: Chairperson → Vice Chairperson → Head → Deputy Head → Member",
+        "council_role": "The card tag and the order within the department come from this: Chairperson → Vice Chairperson → Head → Member",
         "dept_key": "Departments and their order come from content/council-departments.json"
       },
       "advisors": {
@@ -515,7 +518,6 @@
         "president": "Chairperson",
         "vice_president": "Vice Chairperson",
         "head": "Head",
-        "deputy_head": "Deputy Head",
         "member": "Member"
       }
     },

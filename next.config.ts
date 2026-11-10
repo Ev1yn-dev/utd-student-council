@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       ...["/:locale(th|en)", "/:locale(th|en)/voice", "/:locale(th|en)/policies/:slug", "/:locale(th|en)/home/:year/:tab"].map((source) => ({ source, headers: cdn })),
-      ...["/banners/:file*", "/banner/:file*", "/brand/:file*", "/credits/:file*", "/illustrations/:file*", "/flags/:file*"].map((source) => ({ source, headers: files })),
+      ...["/banners/:file*", "/banner/:file*", "/brand/:file*", "/credits/:file*", "/illustrations/:file*", "/flags/:file*", "/images/council/:file*"].map((source) => ({ source, headers: files })),
       ...["/icon.png", "/apple-icon.png", "/favicon.ico"].map((source) => ({ source, headers: icons })),
       { source: "/manifest.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
     ];

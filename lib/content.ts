@@ -1,13 +1,12 @@
 import "server-only";
 import banner from "@/content/banner.json";
 import seed from "@/content/seed.json";
-import { isCouncilRole, roleFromTitle, type CouncilRole } from "@/lib/council";
-import { deptByKey, deptKeyFromLabel } from "@/lib/council-departments";
+import { COUNCIL_MEMBERS, COUNCIL_YEAR, type CouncilMember } from "@/lib/council-members";
 import { supabaseConfigured } from "@/lib/env";
-import { adminClient } from "@/lib/supabase/admin";
 import { publicClient, publicImageUrl } from "@/lib/supabase/public";
 
-// Public content, scoped to one academic year. With Supabase configured it comes from approved rows
+// Public content, scoped to one academic year. The council roster comes from src/data/council-members.json
+// (lib/council-members.ts), not from the database. With Supabase configured it comes from approved rows
 // (RLS: anon sees status='approved' only, and never the instagram/contact columns); without it (local dev)
 // content/seed.json — same row shape as the tables — is used so the site still renders.
 // Everything here is public by design and small (one year of one school council), so a year is sent to the page
@@ -30,20 +29,11 @@ export type Policy = {
   /** row dates (ISO) for search: sitemap lastModified, Article datePublished / dateModified; null in the seed data */
   createdAt: string | null; updatedAt: string | null;
 };
-export type Contact = { instagram: string | null; contact: string | null };
-export type Member = {
-  id: string; name: L; nickname: L; role: L; termNo: string; execTitle: L; dept: L; party: L; photo: Img | null; rank: number;
-  /** fixed role (tag + order on the council tab); from members.council_role, else from the Thai title */
-  councilRole: CouncilRole;
-  /** department (content/council-departments.json); null = not one of them */
-  deptKey: string | null;
-  /** whole introduction poster, for the popup (same consent rule as photo) */
-  poster: Img | null;
-} & Contact;
-export type Advisor = { id: string; name: L; nickname: L; role: L; subject: L; position: L; photo: Img | null } & Contact;
 export type YearContent = {
   year: number; years: number[]; current: number;
-  announcements: Announcement[]; activities: Activity[]; policies: Policy[]; members: Member[]; advisors: Advisor[];
+  announcements: Announcement[]; activities: Activity[]; policies: Policy[];
+  /** council roster (src/data/council-members.json); empty for any other year */
+  people: CouncilMember[];
 };
 /** Hero slide: either an uploaded photo (storage variants) or a banner file shipped in public/banner. */
 export type Photo = {
@@ -75,15 +65,6 @@ const toImg = (r: PhotoRow | null): Img | null => {
 const sortedImgs = (rows: PhotoRow[] | null | undefined) =>
   [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg).filter((x): x is Img => !!x);
 
-/** Only consented contacts leave the server. `@handle` is stripped to a bare IG handle. */
-/** A valid Instagram handle (spaces and a leading @ removed) or null — the link is built only from this. */
-export const igHandle = (v: string | null | undefined) => {
-  const h = (v ?? "").replace(/\s+/g, "").replace(/^@/, "");
-  return /^[A-Za-z0-9._]{1,30}$/.test(h) ? h : null;
-};
-const contactOf = (consent: boolean, instagram: string | null | undefined, contact: string | null | undefined): Contact =>
-  consent ? { instagram: igHandle(instagram), contact: contact?.trim() || null } : { instagram: null, contact: null };
-
 // ───────────────────────── row -> view model (shared by seed and DB) ─────────────────────────
 
 type Row = Record<string, unknown> & { id: string };
@@ -107,38 +88,6 @@ const toPolicy = (r: Row): Policy => ({
   cover: toImg(one(r.cover as PhotoRow | PhotoRow[] | null)), photos: sortedImgs(r.photos as PhotoRow[] | null),
   createdAt: (r.created_at as string | null) ?? null, updatedAt: (r.updated_at as string | null) ?? null,
 });
-/**
- * A member's photos are shown only with consent_photo = true (null = not asked yet). Poster files (photo_key) are in
- * the public bucket only while consent is on (lib/admin/consent.ts copies / removes them).
- */
-const memberPhotos = (r: Row): { photo: Img | null; poster: Img | null } => {
-  if (r.consent_photo !== true) return { photo: null, poster: null };
-  const key = r.photo_key as string | null;
-  if (!key) return { photo: toImg(one(r.photo as PhotoRow | null)), poster: null };
-  const file = (kind: "card" | "poster", w: number, h: number): Img => {
-    const webp = publicImageUrl(`${key}-${kind}.webp`);
-    return { id: `${key}-${kind}`, w, h, blur: null, src: { 480: webp, 960: webp, 1920: webp }, avif: `${publicImageUrl(`${key}-${kind}.avif`)} ${w}w` };
-  };
-  return { photo: file("card", 440, 550), poster: file("poster", 720, 900) };
-};
-
-const toMember = (r: Row, contact: Contact): Member => {
-  const deptKey = deptByKey(r.dept_key as string | null)?.key ?? deptKeyFromLabel(s(r, "dept"));
-  const d = deptByKey(deptKey);
-  return {
-    id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
-    role: l(s(r, "role_title"), s(r, "role_title_en")), termNo: s(r, "term_no"), execTitle: l(s(r, "exec_title"), s(r, "exec_title_en")),
-    dept: d ? l(d.th, d.en) : l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")),
-    rank: Number(r.sort_order ?? 0), councilRole: isCouncilRole(r.council_role) ? r.council_role : roleFromTitle(s(r, "role_title")),
-    deptKey, ...contact, ...memberPhotos(r),
-  };
-};
-const toAdvisor = (r: Row, contact: Contact): Advisor => ({
-  id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
-  role: l(s(r, "role_label"), s(r, "role_label_en")), subject: l(s(r, "subject_group"), s(r, "subject_group_en")),
-  position: l(s(r, "position"), s(r, "position_en")), photo: toImg(one(r.photo as PhotoRow | null)), ...contact,
-});
-
 // ───────────────────────── years ─────────────────────────
 
 export async function getYears(): Promise<{ years: number[]; current: number }> {
@@ -155,65 +104,42 @@ export async function getYearContent(requested?: number): Promise<YearContent> {
   const { years, current } = await getYears();
   const year = requested && years.includes(requested) ? requested : current;
   const content = supabaseConfigured() ? await fromDb(year) : fromSeed(year);
-  return { year, years, current, ...content };
+  return { year, years, current, ...content, people: year === COUNCIL_YEAR ? COUNCIL_MEMBERS : [] };
 }
 
-type Lists = Pick<YearContent, "announcements" | "activities" | "policies" | "members" | "advisors">;
+type Lists = Pick<YearContent, "announcements" | "activities" | "policies">;
 const bySort = (a: Row, b: Row) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
 
 function fromSeed(year: number): Lists {
   const ofYear = (xs: Row[]) => xs.filter((x) => x.year === year);
-  const rows = seed as unknown as Record<"announcements" | "activities" | "policies" | "members" | "advisors", Row[]>;
-  const c = (r: Row) => contactOf(!!r.consent_public, r.instagram as string, r.contact as string);
+  const rows = seed as unknown as Record<"announcements" | "activities" | "policies", Row[]>;
   return {
     announcements: ofYear(rows.announcements)
       .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || s(b, "published_on").localeCompare(s(a, "published_on")))
       .map(toAnnouncement),
     activities: ofYear(rows.activities).sort((a, b) => s(b, "event_date").localeCompare(s(a, "event_date"))).map(toActivity),
     policies: ofYear(rows.policies).sort(bySort).map(toPolicy),
-    members: ofYear(rows.members).sort(bySort).map((r) => toMember(r, c(r))),
-    advisors: ofYear(rows.advisors).sort(bySort).map((r) => toAdvisor(r, c(r))),
   };
 }
 
 const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
 const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
 const POL = `id,year,slug,created_at,updated_at,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
-const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,council_role,dept_key,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
-const ADV = `id,name,name_en,nickname,nickname_en,role_label,role_label_en,subject_group,subject_group_en,position,position_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
 
 async function fromDb(year: number): Promise<Lists> {
   const db = publicClient();
-  const [ann, act, pol, mem, adv] = await Promise.all([
+  const [ann, act, pol] = await Promise.all([
     db.from("announcements").select(ANN).eq("year", year).order("pinned", { ascending: false }).order("published_on", { ascending: false }),
     db.from("activities").select(ACT).eq("year", year).order("event_date", { ascending: false }),
     db.from("policies").select(POL).eq("year", year).order("sort_order"),
-    db.from("members").select(MEM).eq("year", year).order("sort_order"),
-    db.from("advisors").select(ADV).eq("year", year).order("sort_order"),
   ]);
-  for (const r of [ann, act, pol, mem, adv]) if (r.error) console.error("[content]", r.error.message);
-  const contacts = await consentedContacts(year);
-  const none = contactOf(false, null, null);
+  for (const r of [ann, act, pol]) if (r.error) console.error("[content]", r.error.message);
   const rows = (d: unknown) => (d ?? []) as Row[];
   return {
     announcements: rows(ann.data).map(toAnnouncement),
     activities: rows(act.data).map(toActivity),
     policies: rows(pol.data).map(toPolicy),
-    members: rows(mem.data).map((r) => toMember(r, contacts.get(r.id) ?? none)),
-    advisors: rows(adv.data).map((r) => toAdvisor(r, contacts.get(r.id) ?? none)),
   };
-}
-
-/** instagram/contact are not readable with the anon key; read them with the service role, consented + approved only. */
-async function consentedContacts(year: number) {
-  const out = new Map<string, Contact>();
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return out;
-  const db = adminClient();
-  const q = (t: "members" | "advisors") =>
-    db.from(t).select("id,instagram,contact").eq("year", year).eq("status", "approved").eq("consent_public", true);
-  const [m, a] = await Promise.all([q("members"), q("advisors")]);
-  for (const r of [...(m.data ?? []), ...(a.data ?? [])]) out.set(r.id, contactOf(true, r.instagram, r.contact));
-  return out;
 }
 
 // ───────────────────────── policy page ─────────────────────────

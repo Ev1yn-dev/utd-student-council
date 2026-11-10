@@ -1,39 +1,24 @@
 import { expect, test } from "./fixtures";
 
-// Council tab: one section per department (content/council-departments.json order), role tags from council_role,
-// role / department chips that toggle, "to be announced" deputy cards.
-test("council by department: sections, tags, chips toggle, placeholders", async ({ page }) => {
+// Council tab (src/data/council-members.json): executives, teacher advisors, then student members by department.
+// No vice-head role anywhere. A card opens its full introduction card; IG opens in a new tab.
+test("council roster: section order, no vice head, card popup, IG link", async ({ page }) => {
   await page.goto("/th?tab=council");
   const tab = page.locator("section[aria-labelledby=council-h]");
-  const sections = tab.locator("section[aria-labelledby^=dept-]");
-  await expect(sections.first()).toContainText("ฝ่ายบริหารสูงสุด");
-  await expect(sections.nth(1)).toContainText("ฝ่ายนโยบายและแบบแผน");
-  // president first in the executive section, tagged from the role
-  await expect(sections.first().locator("li").first()).toContainText("ประธาน");
-  await expect(sections.first().locator("li").first()).not.toContainText("รองประธาน");
-  // a department without a deputy shows the placeholder
-  await expect(sections.nth(1).getByText("รอประกาศ")).toBeVisible();
+  const titles = tab.locator("h3");
+  await expect(titles.nth(0)).toHaveText("คณะผู้บริหาร");
+  await expect(titles.nth(1)).toHaveText("ครูที่ปรึกษาสภานักเรียน");
+  await expect(titles.nth(2)).toHaveText("สมาชิกสภานักเรียน");
+  await expect(tab.locator("h4").first()).toContainText("ฝ่าย");
+  await expect(tab.getByText("รองหัวหน้า")).toHaveCount(0);
+  await expect(tab.getByText(/^(null|—)$/)).toHaveCount(0);
 
-  const head = tab.getByRole("button", { name: "หัวหน้าฝ่าย", exact: true });
-  await head.click();
-  await expect(head).toHaveAttribute("aria-pressed", "true");
-  await expect(tab.getByText("รอประกาศ")).toHaveCount(0);
-  await expect(tab.locator("section[aria-labelledby=dept-executive]")).toHaveCount(0);
-  await head.click();
-  await expect(head).toHaveAttribute("aria-pressed", "false");
-  await expect(tab.locator("section[aria-labelledby=dept-executive]")).toHaveCount(1);
+  await tab.locator("li").first().getByRole("button").click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("img")).toHaveAttribute("alt", /.+/);
+  await page.keyboard.press("Escape");
 
-  const dept = tab.getByRole("button", { name: "สวัสดิการ", exact: true });
-  await dept.click();
-  await expect(sections).toHaveCount(1);
-  await expect(sections.first()).toContainText("ฝ่ายสวัสดิการ");
-  await tab.getByRole("button", { name: "ล้างตัวกรอง" }).click();
-  await expect(sections.first()).toContainText("ฝ่ายบริหารสูงสุด");
-
-  // Instagram opens in a new tab, labelled
-  const ig = tab.locator('a[href^="https://instagram.com/"]').first();
-  if (await ig.count()) {
-    await expect(ig).toHaveAttribute("target", "_blank");
-    await expect(ig).toHaveAttribute("aria-label", /.+/);
-  }
+  const ig = tab.locator('a[href^="https://www.instagram.com/"]').first();
+  await expect(ig).toHaveAttribute("target", "_blank");
+  await expect(ig).toHaveAttribute("rel", "noopener noreferrer");
 });
