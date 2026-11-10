@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { preload } from "react-dom";
+import { preconnect, preload } from "react-dom";
 import type { Photo } from "@/lib/content";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons/Icon";
 import { HERO_SIZES } from "@/components/sections/hero-sizes";
@@ -50,10 +50,11 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const n = photos.length;
-  // the other slides' photos are fetched only once the page has loaded (first view = the first photo only)
+  // after load + idle: the other slides' photos are fetched, autoplay and the Ken Burns drift start. Until then the
+  // first slide is exactly the server-rendered <img> (same element, no transform), so it stays the LCP element.
   const [armed, setArmed] = useState(false);
   useEffect(() => afterLoad(() => setArmed(true)), []);
-  const paused = hover || focused || dx !== null || !!reduce;
+  const paused = !armed || hover || focused || dx !== null || !!reduce;
 
   useEffect(() => {
     if (paused || n < 2) return;
@@ -106,6 +107,9 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
   // LCP: the first slide is requested from the <head> (server render of this client component = HTML only; a
   // server-component preload() would also fire on every page that merely prefetches "/")
   const first = photos[0];
+  // uploaded slides come from Supabase Storage (fetched after load): open that connection early, without CORS (an <img>)
+  const remote = photos.find((ph) => /^https:\/\//.test(ph.src));
+  if (remote) preconnect(new URL(remote.src).origin);
   if (first) {
     preload(first.src, { as: "image", fetchPriority: "high", imageSrcSet: first.avifSet ?? first.srcSet, imageSizes: HERO_SIZES, ...(first.avifSet ? { type: "image/avif" } : {}) });
   }
@@ -171,8 +175,8 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                   draggable={false}
                   fetchPriority={k === 0 ? "high" : "low"}
                   loading={k === 0 ? "eager" : "lazy"}
-                  decoding={k === 0 ? "sync" : "async"}
-                  className={cn("no-select pointer-events-none absolute inset-0 h-full w-full object-cover", k === i && !reduce && !ph.plain && "ken-burns")}
+                  decoding="async"
+                  className={cn("no-select pointer-events-none absolute inset-0 h-full w-full object-cover", armed && k === i && !reduce && !ph.plain && "ken-burns")}
                   style={{
                     objectPosition: ph.focal ?? "50% 50%",
                     transformOrigin: ORIGINS[k % ORIGINS.length],

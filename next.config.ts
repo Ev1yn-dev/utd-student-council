@@ -31,8 +31,9 @@ const nextConfig: NextConfig = {
   // share images rendered on request (policy pages) read the Thai font and the emblem from disk
   outputFileTracingIncludes: { "/**/opengraph-image*": ["./assets/fonts/*.ttf", "./public/brand/logo-council-256.png"] },
   reactStrictMode: true,
-  // Tailwind CSS is small (~16 KB gz): inlined in <head> instead of a render-blocking <link> (first view)
-  experimental: { inlineCss: true },
+  // CSS as a normal <link> (16.9 KB gz, cached across pages). Inlining it (inlineCss) also copied all 104 KB of it into
+  // the RSC payload of every page (333 KB HTML on /th); measured slower on mobile (Lighthouse 84 -> 86/87 locally).
+  experimental: { inlineCss: false },
   async redirects() {
     // v2 single page: old section routes -> matching tab (with or without a locale prefix; proxy.ts adds the prefix)
     const old: [string, string][] = [

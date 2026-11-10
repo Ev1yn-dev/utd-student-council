@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ScrollTop } from "@/components/layout/ScrollTop";
@@ -11,7 +12,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SkipLink />
       <Navbar />
       <main id="main" className="flex-1">{children}</main>
-      <Footer />
+      {/* below the fold: hydrated after the page above it (selective hydration) */}
+      <Suspense>
+        <Footer />
+      </Suspense>
       <ScrollTop />
       <VisitBeacon />
     </div>

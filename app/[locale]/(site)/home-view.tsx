@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Suspense } from "react";
 import { HomeTabs } from "@/components/home/HomeTabs";
 import { Hero } from "@/components/sections/Hero";
 import { getYearContent } from "@/lib/content";
@@ -26,7 +27,11 @@ export async function HomeView({ locale, year, tab }: { locale: string; year?: n
     <>
       <JsonLd graph={graph} />
       <Hero />
-      <HomeTabs content={content} initialTab={isTab(tab) ? tab : DEFAULT_TAB} />
+      {/* own Suspense boundary = selective hydration: React hydrates the header and banner first and may yield to the
+          browser (first paint, LCP) before this larger island; the server HTML is complete either way */}
+      <Suspense>
+        <HomeTabs content={content} initialTab={isTab(tab) ? tab : DEFAULT_TAB} />
+      </Suspense>
     </>
   );
 }
