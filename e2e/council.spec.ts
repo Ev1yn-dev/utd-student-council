@@ -1,9 +1,8 @@
 import { expect, test } from "./fixtures";
 
 // Council tab: the student committee by department (content/council-departments.json order) — database rows merged
-// with src/data/council-members.json — then "ครูที่ปรึกษาและผู้บริหาร" (executives, advisors) in its own section.
-// No vice-head role anywhere.
-test("council: committee by department, separate staff section, no vice head", async ({ page }) => {
+// with src/data/council-members.json. Executives and teacher advisors are on the advisor tab. No vice-head role anywhere.
+test("council: committee by department, no staff, no vice head", async ({ page }) => {
   await page.goto("/th?tab=council");
   const committee = page.locator("section[aria-labelledby=council-h]");
   const sections = committee.locator("section[aria-labelledby^=dept-]");
@@ -11,9 +10,7 @@ test("council: committee by department, separate staff section, no vice head", a
   await expect(committee.getByText("รองหัวหน้า")).toHaveCount(0);
   await expect(committee.getByText("รอประกาศ")).toHaveCount(0);
 
-  const staff = page.locator("section[aria-labelledby=staff-h]");
-  await expect(staff.locator("h3").nth(0)).toHaveText("ผู้บริหาร");
-  await expect(staff.locator("h3").nth(1)).toHaveText("ครูที่ปรึกษาสภานักเรียน");
+  await expect(page.getByRole("heading", { name: "ครูที่ปรึกษาสภานักเรียน" })).toHaveCount(0);
 
   // a roster card opens the popup with the full introduction card
   await committee.getByRole("button", { name: /นภัทร/ }).first().click();
@@ -22,4 +19,15 @@ test("council: committee by department, separate staff section, no vice head", a
 
   const ig = committee.locator('a[href^="https://instagram.com/"]').first();
   await expect(ig).toHaveAttribute("target", "_blank");
+});
+
+// Advisor tab: ผู้บริหาร first, then ครูที่ปรึกษาสภานักเรียน, in the committee's portrait card.
+test("advisors: executives then teacher advisors, committee card and popup", async ({ page }) => {
+  await page.goto("/th?tab=advisor");
+  const zone = page.locator("section[aria-labelledby=advisor-h]");
+  await expect(zone.locator("h3").nth(0)).toHaveText("ผู้บริหาร");
+  await expect(zone.locator("h3").nth(1)).toHaveText("ครูที่ปรึกษาสภานักเรียน");
+  await expect(zone.locator('a[href^="https://instagram.com/"]')).toHaveCount(0);
+  await zone.locator("h4 button").first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
 });

@@ -36,7 +36,7 @@ export function filterContent(c: YearContent, query: string) {
   };
 }
 
-/** Council tab: the student committee only (executives and advisors are not counted); advisor tab: the advisors. */
+/** Council tab: the student committee; advisor tab: the school executives and the teacher advisors. */
 export const tabCount = (c: Pick<YearContent, "announcements" | "activities" | "policies" | "members" | "staff">, t: TabKey) =>
   t === "news" ? c.announcements.length + c.activities.length : t === "policy" ? c.policies.length
-    : t === "council" ? c.members.length : c.staff.filter((p) => p.group === "advisor").length;
+    : t === "council" ? c.members.length : c.staff.length;

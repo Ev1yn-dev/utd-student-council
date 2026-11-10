@@ -3,6 +3,7 @@ import banner from "@/content/banner.json";
 import seed from "@/content/seed.json";
 import { isCouncilRole, roleFromTitle, type CouncilRole } from "@/lib/council";
 import { deptByKey, deptKeyFromLabel } from "@/lib/council-departments";
+import { rosterPhoto } from "@/lib/council-images";
 import { COUNCIL_MEMBERS, COUNCIL_YEAR, type CouncilMember } from "@/lib/council-members";
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
@@ -143,12 +144,6 @@ const toMember = (r: Row, contact: Contact): Member => {
 /** Same person in both sources: spaces and the title prefix (นาย / นางสาว / นาง) are ignored. */
 const nameKey = (v: string) => v.normalize("NFC").replace(/s+/g, "").replace(/^(นางสาว|นาง|นาย)/, "");
 
-/** Roster files: the introduction card (720×938, plus a 480w copy) fills the portrait photo frame and the popup. */
-const rosterCard = (p: CouncilMember): Img => ({
-  id: `council-${p.id}`, w: 720, h: 938, blur: null,
-  src: { 480: p.card.replace(/.webp$/, "-480.webp"), 960: p.card, 1920: p.card },
-});
-
 /**
  * Students from the roster file merged into the committee: a person already in the database (by name) gets the
  * file's nickname, department, role, party, IG and photo; anyone else is added, after the stored people of their
@@ -159,7 +154,7 @@ function withRoster(members: Member[]): Member[] {
   for (const p of COUNCIL_MEMBERS) {
     if (p.group !== "member") continue;
     const d = deptByKey(deptKeyFromLabel(p.department ?? ""));
-    const card = rosterCard(p);
+    const card = rosterPhoto(p);
     const i = out.findIndex((m) => nameKey(m.name.th) === nameKey(p.name));
     const old = i >= 0 ? out[i] : null;
     const next: Member = {

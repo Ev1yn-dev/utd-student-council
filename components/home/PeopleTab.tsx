@@ -1,12 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { AnimatePresence, m as mo } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { Contact, Img, L, Member } from "@/lib/content";
-import { CARD_SIZE, councilImageLoader } from "@/lib/council-images";
+import { rosterPhoto } from "@/lib/council-images";
 import type { CouncilGroup, CouncilMember } from "@/lib/council-members";
 import { COUNCIL_ROLES, groupByDepartment, type CouncilRole, type Department } from "@/lib/council";
 import { DEPARTMENTS } from "@/lib/council-departments";
@@ -38,42 +37,31 @@ const ROLE_TAG: Record<CouncilRole, { tone: Tone; icon: Badge["icon"] }> = {
 const Modal = dynamic(() => import("@/components/ui/Modal").then((r) => r.Modal));
 
 /**
- * Council tab: the student committee (one section per department), then a separate section with the school
- * executives and teacher advisors (circle-photo cards). Advisor tab: the advisors only.
+ * Council tab: the student committee (one section per department). Advisor tab: the school executives, then the
+ * student council teacher advisors. Both use the same portrait card and popup.
  */
 export function PeopleTab({ kind, members, staff, query, onClear }: {
   kind: "council" | "advisor"; members: Member[]; staff: CouncilMember[]; query: string; onClear: () => void;
 }) {
   const t = useTranslations("people");
-  const advisors = staff.filter((p) => p.group === "advisor");
-  const count = kind === "council" ? members.length : advisors.length;
+  const count = kind === "council" ? members.length : staff.length;
   return (
-    <>
-      <section aria-labelledby={`${kind}-h`}>
-        <ZoneTitle icon={kind === "council" ? <IconUsers width={18} height={18} /> : <IconTeacher width={18} height={18} />} count={count}>
-          <span id={`${kind}-h`}>{t(kind === "council" ? "council" : "advisors")}</span>
-        </ZoneTitle>
-        {count === 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
-            <AnimatePresence mode="popLayout">
-              <EmptyState key="empty" query={query} onClear={onClear} kind={kind} />
-            </AnimatePresence>
-          </div>
-        ) : kind === "council" ? (
-          <Council members={members} />
-        ) : (
-          <Staff sections={[{ key: "advisor", title: "", people: advisors }]} />
-        )}
-      </section>
-      {kind === "council" && staff.length > 0 && (
-        <section aria-labelledby="staff-h" className="mt-12">
-          <ZoneTitle icon={<IconTeacher width={18} height={18} />} count={staff.length}>
-            <span id="staff-h">{t("staff")}</span>
-          </ZoneTitle>
-          <Staff sections={STAFF_GROUPS.map((g) => ({ key: g, title: t(`staffGroups.${g}`), people: staff.filter((p) => p.group === g) }))} />
-        </section>
+    <section aria-labelledby={`${kind}-h`}>
+      <ZoneTitle icon={kind === "council" ? <IconUsers width={18} height={18} /> : <IconTeacher width={18} height={18} />} count={count}>
+        <span id={`${kind}-h`}>{t(kind === "council" ? "council" : "staff")}</span>
+      </ZoneTitle>
+      {count === 0 ? (
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+          <AnimatePresence mode="popLayout">
+            <EmptyState key="empty" query={query} onClear={onClear} kind={kind} />
+          </AnimatePresence>
+        </div>
+      ) : kind === "council" ? (
+        <Council members={members} />
+      ) : (
+        <Staff staff={staff} />
       )}
-    </>
+    </section>
   );
 }
 
@@ -124,23 +112,13 @@ function Council({ members }: { members: Member[] }) {
       ) : (
         <div className="space-y-9">
           {sections.map((s) => (
-            <section key={s.dept.key} aria-labelledby={`dept-${s.dept.key}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <h3 id={`dept-${s.dept.key}`} data-swap className="min-w-0 font-display text-[1.05rem] font-semibold leading-snug text-strong md:text-[1.2rem]">
-                  {s.dept === other ? label(other) : t("deptHeading", { name: label(s.dept) })}
-                </h3>
-                <span aria-hidden className="dept-rule h-[3px] min-w-10 flex-1 rounded-full" />
-              </div>
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                <AnimatePresence mode="popLayout">
-                  {s.people.map((m) => (
-                    <CardItem key={m.id} index={index++}>
-                      <MemberCard m={m} onOpen={() => setOpenId(m.id)} />
-                    </CardItem>
-                  ))}
-                </AnimatePresence>
-              </ul>
-            </section>
+            <PersonSection key={s.dept.key} id={`dept-${s.dept.key}`} title={s.dept === other ? label(other) : t("deptHeading", { name: label(s.dept) })}>
+              {s.people.map((m) => (
+                <CardItem key={m.id} index={index++}>
+                  <MemberCard m={m} onOpen={() => setOpenId(m.id)} />
+                </CardItem>
+              ))}
+            </PersonSection>
           ))}
         </div>
       )}
@@ -185,58 +163,97 @@ function RoleTag({ role, className }: { role: CouncilRole; className?: string })
   return <BadgeChip b={{ label: t(`roles.${role}`), ...ROLE_TAG[role] }} className={className} />;
 }
 
-function MemberCard({ m, onOpen }: { m: Member; onOpen: () => void }) {
+/** A department (or staff group) heading over a grid of portrait cards. */
+function PersonSection({ id, title, children }: { id: string; title: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={id}>
+      <div className="mb-4 flex items-center gap-3">
+        <h3 id={id} data-swap className="min-w-0 font-display text-[1.05rem] font-semibold leading-snug text-strong md:text-[1.2rem]">
+          {title}
+        </h3>
+        <span aria-hidden className="dept-rule h-[3px] min-w-10 flex-1 rounded-full" />
+      </div>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <AnimatePresence mode="popLayout">{children}</AnimatePresence>
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * Portrait card shared by the committee and the staff: frame, portrait photo frame, name (the whole card opens the
+ * popup), then the lines given as children (nickname, role, ...).
+ */
+function PortraitCard({ id, name, photo, alt, tag, featured, onOpen, children }: {
+  id: string; name: string; photo: Img | null; alt: string; tag?: React.ReactNode; featured?: boolean; onOpen: () => void; children: React.ReactNode;
+}) {
   const t = useTranslations("people");
-  const pick = useL();
-  const president = m.councilRole === "president";
-  const nick = pick(m.nickname).value;
-  const role = pick(m.role).value;
   return (
     <Lift>
       <mo.article
-        layoutId={`person-${m.id}`}
+        layoutId={`person-${id}`}
         style={{ borderRadius: 20 }}
         className={cn(
           "relative flex h-full flex-col gap-3 overflow-hidden border bg-surface p-3 shadow-soft transition-shadow duration-300 group-hover:shadow-lift sm:p-4",
-          president ? "border-gold/70 bg-gradient-to-b from-gold-soft/60 to-surface ring-1 ring-gold/40" : "border-line",
+          featured ? "border-gold/70 bg-gradient-to-b from-gold-soft/60 to-surface ring-1 ring-gold/40" : "border-line",
         )}
       >
-        <RoleTag role={m.councilRole} className="self-start" />
+        {tag}
         <div className="grid flex-1 grid-cols-[6.5rem_1fr] gap-3 sm:grid-cols-1 sm:gap-3.5">
           <SmartImage
-            img={m.photo}
-            alt={nick ? t("photoAlt", { nickname: nick, role }) : pick(m.name).value}
+            img={photo}
+            alt={alt}
             kind="portrait"
-            label={m.photo ? undefined : t("photoPending")}
+            label={photo ? undefined : t("photoPending")}
             sizes="(max-width: 640px) 112px, (max-width: 1024px) 50vw, 360px"
             className="aspect-[3/4] w-full overflow-hidden rounded-2xl bg-sky sm:mx-auto sm:max-w-[220px]"
             imgClassName="group-hover:scale-105"
           />
           <div className="flex min-w-0 flex-col gap-1 sm:items-center sm:text-center">
             {/* the whole card opens the popup (stretched button); the IG link sits above it */}
-            <h4 className={cn("font-display font-semibold leading-snug text-strong", president ? "text-[1.08rem] sm:text-[1.15rem]" : "text-[0.98rem] sm:text-base")}>
+            <h4 className={cn("font-display font-semibold leading-snug text-strong", featured ? "text-[1.08rem] sm:text-[1.15rem]" : "text-[0.98rem] sm:text-base")}>
               <button type="button" onClick={onOpen} aria-haspopup="dialog" className="text-left after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-mid sm:text-center">
-                <Name v={pick(m.name).value} />
+                <Name v={name} />
               </button>
             </h4>
-            {nick && <span className="text-[0.88rem] text-muted">{t("nickname")} {nick}</span>}
-            <p className="text-[0.84rem] leading-snug text-ink"><Tx v={m.role} /></p>
-            {m.party.th && <p className="text-[0.8rem] text-muted"><Tx v={m.party} /></p>}
-            {m.instagram && (
-              <a
-                href={`https://instagram.com/${m.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                aria-label={t("openInstagram", { name: nick || pick(m.name).value })}
-                className="relative z-10 mt-1 inline-flex w-fit items-center gap-1.5 rounded-full px-1 py-0.5 text-[0.84rem] font-medium text-pink-ink hover:underline sm:mt-auto"
-              >
-                <IconInstagram width={15} height={15} /> @{m.instagram}
-              </a>
-            )}
+            {children}
           </div>
         </div>
       </mo.article>
     </Lift>
+  );
+}
+
+function MemberCard({ m, onOpen }: { m: Member; onOpen: () => void }) {
+  const t = useTranslations("people");
+  const pick = useL();
+  const nick = pick(m.nickname).value;
+  const role = pick(m.role).value;
+  return (
+    <PortraitCard
+      id={m.id}
+      name={pick(m.name).value}
+      photo={m.photo}
+      alt={nick ? t("photoAlt", { nickname: nick, role }) : pick(m.name).value}
+      tag={<RoleTag role={m.councilRole} className="self-start" />}
+      featured={m.councilRole === "president"}
+      onOpen={onOpen}
+    >
+      {nick && <span className="text-[0.88rem] text-muted">{t("nickname")} {nick}</span>}
+      <p className="text-[0.84rem] leading-snug text-ink"><Tx v={m.role} /></p>
+      {m.party.th && <p className="text-[0.8rem] text-muted"><Tx v={m.party} /></p>}
+      {m.instagram && (
+        <a
+          href={`https://instagram.com/${m.instagram}`}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          aria-label={t("openInstagram", { name: nick || pick(m.name).value })}
+          className="relative z-10 mt-1 inline-flex w-fit items-center gap-1.5 rounded-full px-1 py-0.5 text-[0.84rem] font-medium text-pink-ink hover:underline sm:mt-auto"
+        >
+          <IconInstagram width={15} height={15} /> @{m.instagram}
+        </a>
+      )}
+    </PortraitCard>
   );
 }
 
@@ -258,49 +275,35 @@ function MemberDetail({ m }: { m: Member }) {
   }} />;
 }
 
-// ───────────────────────── executives and advisors (circle-photo cards) ─────────────────────────
+// ───────────────────────── executives, then teacher advisors (same card and popup as the committee) ─────────────────────────
 
 const STAFF_GROUPS: CouncilGroup[] = ["executive", "advisor"];
-type StaffSection = { key: string; title: string; people: CouncilMember[] };
 
-function Staff({ sections }: { sections: StaffSection[] }) {
+function Staff({ staff }: { staff: CouncilMember[] }) {
+  const t = useTranslations("people");
   const [openId, setOpenId] = useState<string | null>(null);
-  const open = sections.flatMap((s) => s.people).find((p) => p.id === openId) ?? null;
-  let index = 0;
+  const open = staff.find((p) => p.id === openId) ?? null;
+  const groups = STAFF_GROUPS.map((g) => ({ g, people: staff.filter((p) => p.group === g) })).filter((s) => s.people.length);
+  let index = 0; // entrance stagger across sections
   return (
     <>
       <div className="space-y-9">
-        {sections.filter((s) => s.people.length).map((s) => (
-          <section key={s.key} aria-labelledby={s.title ? `staff-${s.key}` : undefined}>
-            {s.title && <SectionTitle id={`staff-${s.key}`} level={3}>{s.title}</SectionTitle>}
-            <ul className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
-              <AnimatePresence mode="popLayout">
-                {s.people.map((p) => (
-                  <CardItem key={p.id} index={index++}>
-                    <PersonCard p={p} onOpen={() => setOpenId(p.id)} />
-                  </CardItem>
-                ))}
-              </AnimatePresence>
-            </ul>
-          </section>
+        {groups.map(({ g, people }) => (
+          <PersonSection key={g} id={`staff-${g}`} title={t(`staffGroups.${g}`)}>
+            {people.map((p) => (
+              <CardItem key={p.id} index={index++}>
+                <PortraitCard id={p.id} name={p.name} photo={rosterPhoto(p)} alt={p.name} onOpen={() => setOpenId(p.id)}>
+                  <p className="text-[0.84rem] leading-snug text-ink">{p.role}</p>
+                </PortraitCard>
+              </CardItem>
+            ))}
+          </PersonSection>
         ))}
       </div>
       <AnimatePresence>
         {open && (
-          <Modal key={open.id} layoutId={`person-${open.id}`} title={<Name v={open.name} />} onClose={() => setOpenId(null)} size="md">
-            <div className="p-3 sm:p-5">
-              <Image
-                loader={councilImageLoader}
-                src={open.card}
-                alt={open.name}
-                width={CARD_SIZE.w}
-                height={CARD_SIZE.h}
-                sizes="(max-width: 640px) calc(100vw - 3rem), 560px"
-                draggable={false}
-                onDragStart={(e) => e.preventDefault()}
-                className="no-select mx-auto h-auto w-full max-w-[560px] rounded-2xl bg-sky shadow-soft"
-              />
-            </div>
+          <Modal key={open.id} layoutId={`person-${open.id}`} title={t("popupTitle")} icon={<IconUser width={18} height={18} />} onClose={() => setOpenId(null)} size="lg">
+            <StaffDetail p={open} />
           </Modal>
         )}
       </AnimatePresence>
@@ -308,73 +311,18 @@ function Staff({ sections }: { sections: StaffSection[] }) {
   );
 }
 
-function SectionTitle({ id, level, children }: { id: string; level: 3 | 4; children: React.ReactNode }) {
-  const H = level === 3 ? "h3" : "h4";
-  return (
-    <div className="mb-4 flex items-center gap-3">
-      <H id={id} className={level === 3
-        ? "min-w-0 font-display text-[1.15rem] font-bold leading-snug text-strong md:text-[1.35rem]"
-        : "min-w-0 font-display text-[1rem] font-semibold leading-snug text-strong md:text-[1.1rem]"}>
-        {children}
-      </H>
-      <span aria-hidden className="dept-rule h-[3px] min-w-10 flex-1 rounded-full" />
-    </div>
-  );
-}
+/** Roster text is Thai only. */
+const thai = (th: string): L => ({ th, en: null });
 
-function PersonCard({ p, onOpen }: { p: CouncilMember; onOpen: () => void }) {
+/** Popup view of an executive or teacher advisor: the introduction card whole, name and role (no party / IG). */
+function StaffDetail({ p }: { p: CouncilMember }) {
   const t = useTranslations("people");
-  return (
-    <Lift>
-      <mo.article
-        layoutId={`person-${p.id}`}
-        style={{ borderRadius: 20 }}
-        className="relative flex h-full flex-col items-center gap-1.5 overflow-hidden border border-line bg-surface px-2 pb-4 pt-4 text-center sm:px-3 shadow-soft transition-shadow duration-300 group-hover:shadow-lift"
-      >
-        <Image
-          loader={councilImageLoader}
-          src={p.avatar}
-          alt={p.name}
-          width={128}
-          height={128}
-          sizes="128px"
-          draggable={false}
-          onDragStart={(e) => e.preventDefault()}
-          className="no-select mb-1.5 size-24 rounded-full bg-sky object-cover ring-2 ring-line transition-transform duration-500 group-hover:scale-105 sm:size-28"
-        />
-        {/* the whole card opens the popup (stretched button); the IG link sits above it */}
-        <p className="font-display text-[0.8rem] font-semibold leading-snug text-strong min-[400px]:text-[0.9rem] sm:text-base">
-          <button
-            type="button"
-            onClick={onOpen}
-            aria-haspopup="dialog"
-            aria-label={t("openCard", { name: p.name })}
-            className="after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-mid"
-          >
-            <Name v={p.name} />
-          </button>
-        </p>
-        {p.nickname && <span className="text-[0.85rem] text-muted">{t("nickname")} {p.nickname}</span>}
-        <p className="text-[0.82rem] leading-snug text-ink">{p.role}</p>
-        {p.party && (
-          <span className="mt-0.5 rounded-full bg-pink-soft px-2.5 py-0.5 text-[0.72rem] font-semibold text-pink-ink ring-1 ring-pink/25">
-            {p.party}
-          </span>
-        )}
-        {p.instagramUrl && (
-          <a
-            href={p.instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t("openInstagram", { name: p.nickname || p.name })}
-            className="relative z-10 mt-auto inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-3 py-1 text-[0.8rem] font-semibold text-white transition-transform hover:-translate-y-0.5"
-          >
-            <IconInstagram width={15} height={15} aria-hidden /> {p.instagram ? `@${p.instagram}` : "Instagram"}
-          </a>
-        )}
-      </mo.article>
-    </Lift>
-  );
+  const photo = rosterPhoto(p);
+  return <PersonDetail p={{
+    id: p.id, name: thai(p.name), photo, poster: p.card ? photo : null, line: thai(p.role), chip: null, badge: null,
+    rows: [[t("roleShort"), p.role]],
+    contact: { instagram: null, contact: null },
+  }} />;
 }
 
 // ───────────────────────── shared ─────────────────────────
