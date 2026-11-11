@@ -35,11 +35,11 @@
     "name": "Uttaradit School Student Council",
     "nameEn": "Uttaradit School Student Council",
     "school": "Uttaradit School",
-    "dataNote": "Last updated {date} · Report a correction via the council's Instagram <ig>@utd_scc</ig>",
+    "dataNote": "Last updated {date} · Report a correction via the council's Instagram <ig>@utd_stdcc</ig>",
     "skip": "Skip to content",
     "nameTh": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
-    "dataNoteNoDate": "Report a correction via the council's Instagram <ig>@utd_scc</ig>",
-    "dataNoteIg": "The council's Instagram @utd_scc (opens in a new tab)"
+    "dataNoteNoDate": "Report a correction via the council's Instagram <ig>@utd_stdcc</ig>",
+    "dataNoteIg": "The council's Instagram @utd_stdcc (opens in a new tab)"
   },
   "header": {
     "nav": "Header",
