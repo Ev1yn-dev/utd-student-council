@@ -6,12 +6,14 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition }
 import type { YearContent } from "@/lib/content";
 import dynamic from "next/dynamic";
 import { Illustration } from "@/components/icons/Illustration";
-import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/icons/Icon";
+import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconInstagram, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/icons/Icon";
+import { CHANNELS } from "@/lib/contact";
 import { useLocale, useTranslations } from "next-intl";
 import { TAB_KEYS, filterContent, homeHref, tabCount, type TabKey } from "@/lib/search";
 import { afterLoad } from "@/lib/gate-client";
 import { ceYear, cn } from "@/lib/utils";
 
+const IG = CHANNELS.find((c) => c.key === "instagram")!;
 const TAB_ICON: Record<TabKey, typeof IconUsers> = { news: IconMegaphone, policy: IconFlag, council: IconUsers, advisor: IconTeacher };
 
 /**
@@ -211,7 +213,19 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
       </div>
       {/* always shown, outside the sticky part: nothing appears/disappears while scrolling (no layout shift) */}
       <p data-swap className="mt-2.5 flex items-start gap-1.5 px-1 text-[0.75rem] text-muted">
-        <IconInfo width={14} height={14} className="mt-0.5 shrink-0" /> {tr("site.dataNote")}
+        <IconInfo width={14} height={14} className="mt-0.5 shrink-0" />
+        <span>
+          {tr.rich(content.updatedAt ? "site.dataNote" : "site.dataNoteNoDate", {
+            // "11 พ.ย. 2569" / "11 Nov 2026" (same style as the footer's date)
+            date: content.updatedAt ? new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(new Date(content.updatedAt)) : "",
+            ig: (chunks) => (
+              <a href={IG.href} target="_blank" rel="noopener noreferrer" aria-label={tr("site.dataNoteIg")} className="inline-flex items-center gap-1 font-medium text-pink-ink underline-offset-2 hover:underline">
+                <IconInstagram width={12} height={12} aria-hidden />
+                {chunks}
+              </a>
+            ),
+          })}
+        </span>
       </p>
 
       <div

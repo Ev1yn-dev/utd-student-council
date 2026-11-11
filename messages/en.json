@@ -35,9 +35,11 @@
     "name": "Uttaradit School Student Council",
     "nameEn": "Uttaradit School Student Council",
     "school": "Uttaradit School",
-    "dataNote": "[Data note — e.g. last updated / report a correction at ...]",
+    "dataNote": "Last updated {date} · Report a correction via the council's Instagram <ig>@utd_scc</ig>",
     "skip": "Skip to content",
-    "nameTh": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์"
+    "nameTh": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
+    "dataNoteNoDate": "Report a correction via the council's Instagram <ig>@utd_scc</ig>",
+    "dataNoteIg": "The council's Instagram @utd_scc (opens in a new tab)"
   },
   "header": {
     "nav": "Header",
@@ -98,15 +100,15 @@
     "cardAria": "{title} — view policy details",
     "back": "Back to policies",
     "detailsAria": "Policy details",
-    "bodyMissing": "[Policy details — to be added]",
+    "bodyMissing": "No policy details yet",
     "gallery": "Photo gallery",
-    "galleryMissing": "[No photos yet — to be added]",
+    "galleryMissing": "No photos yet",
     "progress": "Progress",
     "progressAria": "Policy progress",
     "owner": "Responsible",
-    "ownerMissing": "[Responsible team — to be added]",
+    "ownerMissing": "No responsible team named yet",
     "timeline": "Progress timeline",
-    "timelineMissing": "[No timeline yet — to be added]",
+    "timelineMissing": "No timeline yet",
     "status": {
       "planned": "Planned",
       "in-progress": "In progress",
@@ -197,8 +199,8 @@
     "close": "Close",
     "thOnly": "TH",
     "thOnlyTitle": "Shown in Thai (no English version yet)",
-    "photo": "[Photo]",
-    "portrait": "[Portrait]",
+    "photo": "No photo yet",
+    "portrait": "No photo yet",
     "scrollTop": "Back to top"
   },
   "gallery": {

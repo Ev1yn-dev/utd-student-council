@@ -49,6 +49,8 @@ export type YearContent = {
   members: Member[];
   /** school executives and teacher advisors: approved rows of public.advisors */
   staff: StaffMember[];
+  /** latest change to anything published for this year (ISO time), null when unknown — the note under the tab bar */
+  updatedAt: string | null;
 };
 /** Hero slide: either an uploaded photo (storage variants) or a banner file shipped in public/banner. */
 export type Photo = {
@@ -160,12 +162,12 @@ export async function getYears(): Promise<{ years: number[]; current: number }> 
 export async function getYearContent(requested?: number): Promise<YearContent> {
   const { years, current } = await getYears();
   const year = requested && years.includes(requested) ? requested : current;
-  const content = supabaseConfigured() ? await fromDb(year) : { ...fromSeed(year), staff: [] };
+  const content = supabaseConfigured() ? await fromDb(year) : { ...fromSeed(year), staff: [], updatedAt: null };
   return { year, years, current, ...content };
 }
 
 type Lists = Pick<YearContent, "announcements" | "activities" | "policies" | "members">;
-type DbLists = Lists & Pick<YearContent, "staff">;
+type DbLists = Lists & Pick<YearContent, "staff" | "updatedAt">;
 const bySort = (a: Row, b: Row) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
 
 function fromSeed(year: number): Lists {
@@ -198,7 +200,7 @@ async function fromDb(year: number): Promise<DbLists> {
     db.from("advisors").select(STAFF).eq("year", year).order("sort_order"),
   ]);
   for (const r of [ann, act, pol, mem, adv]) if (r.error) console.error("[content]", r.error.message);
-  const contacts = await consentedContacts(year);
+  const [contacts, updatedAt] = await Promise.all([consentedContacts(year), latestUpdate(year)]);
   const none = contactOf(false, null, null);
   const rows = (d: unknown) => (d ?? []) as Row[];
   return {
@@ -207,7 +209,18 @@ async function fromDb(year: number): Promise<DbLists> {
     policies: rows(pol.data).map(toPolicy),
     members: rows(mem.data).map((r) => toMember(r, contacts.get(r.id) ?? none)),
     staff: rows(adv.data).map(toStaff),
+    updatedAt,
   };
+}
+
+/** Newest updated_at among the approved rows of one year (service role: updated_at is not granted to anon on every table). */
+async function latestUpdate(year: number): Promise<string | null> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const db = adminClient();
+  const tables = ["announcements", "activities", "policies", "members", "advisors"] as const;
+  const res = await Promise.all(tables.map((t) => db.from(t).select("updated_at").eq("year", year).eq("status", "approved").order("updated_at", { ascending: false }).limit(1)));
+  const dates = res.flatMap((r) => (r.data ?? []).map((x) => x.updated_at as string | null)).filter((d): d is string => !!d);
+  return dates.sort().at(-1) ?? null;
 }
 
 const toStaff = (r: Row): StaffMember => ({
