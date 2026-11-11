@@ -48,7 +48,7 @@ export default async function PolicyPage({ params }: Props) {
       headline: title,
       description: (en && p.summary.en) || p.summary.th || title,
       // the policy's own cover (already public on the page), else the council emblem
-      image: p.cover ? (p.cover.src[1920].startsWith("/") ? absolute(p.cover.src[1920]) : p.cover.src[1920]) : absolute("/brand/icon-512.png"),
+      image: p.cover ? (p.cover.src[1920].startsWith("/") ? absolute(p.cover.src[1920]) : p.cover.src[1920]) : absolute("/brand/favicon-512.png"),
       published: p.createdAt,
       modified: p.updatedAt ?? p.createdAt,
     }));

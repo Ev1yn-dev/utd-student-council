@@ -71,13 +71,15 @@ const nextConfig: NextConfig = {
       { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
       { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
     ];
-    // app/icon.png, app/apple-icon.png are linked with a content hash (?abc123); favicon.ico rarely changes
+    // app/icon.png, app/apple-icon.png are linked with a content hash (?abc123)
     const icons = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
     return [
       { source: "/:path*", headers: securityHeaders },
       ...["/:locale(th|en)", "/:locale(th|en)/voice", "/:locale(th|en)/policies/:slug", "/:locale(th|en)/home/:year/:tab"].map((source) => ({ source, headers: cdn })),
       ...["/banners/:file*", "/banner/:file*", "/brand/:file*", "/credits/:file*", "/illustrations/:file*", "/flags/:file*", "/images/council/:file*"].map((source) => ({ source, headers: files })),
-      ...["/icon.png", "/apple-icon.png", "/favicon.ico"].map((source) => ({ source, headers: icons })),
+      ...["/icon.png", "/apple-icon.png"].map((source) => ({ source, headers: icons })),
+      // no content hash in its name: 1 day, so a new crest reaches browsers and Google's favicon fetcher
+      { source: "/favicon.ico", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
       { source: "/manifest.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
     ];
   },

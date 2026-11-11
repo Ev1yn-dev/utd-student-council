@@ -25,7 +25,7 @@ export const isBlockedTool = (ua: string) => BLOCKED_TOOLS.test(ua);
 const SEARCH_BOTS: Array<{ name: string; ua: RegExp; domains?: string[]; ipList?: string }> = [
   // .gae.googleusercontent.com = Google's user-triggered fetchers (Search Console verification, feeds); never the whole
   // .googleusercontent.com, which is also the reverse DNS of every customer VM on Google Cloud
-  { name: "google", ua: /googlebot|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google|google-site-verification|chrome-lighthouse/i, domains: [".googlebot.com", ".google.com", ".gae.googleusercontent.com"] },
+  { name: "google", ua: /googlebot|google-favicon|google-inspectiontool|googleother|storebot-google|adsbot-google|apis-google|feedfetcher-google|google-site-verification|chrome-lighthouse/i, domains: [".googlebot.com", ".google.com", ".gae.googleusercontent.com"] },
   { name: "bing", ua: /bingbot|bingpreview|msnbot|adidxbot/i, domains: [".search.msn.com"] },
   { name: "apple", ua: /applebot(?!-extended)/i, domains: [".applebot.apple.com"] },
   { name: "duckduckgo", ua: /duckduckbot/i, ipList: "https://duckduckgo.com/duckduckbot.json" },

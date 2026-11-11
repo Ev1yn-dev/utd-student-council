@@ -73,7 +73,7 @@ export function organizationLd(names: { th: string; en: string }) {
     name: names.th,
     alternateName: [SITE_SHORT, names.en],
     url: SITE_URL,
-    logo: { "@type": "ImageObject", url: absolute("/brand/icon-512.png"), width: 512, height: 512 },
+    logo: { "@type": "ImageObject", url: absolute("/brand/favicon-512.png"), width: 512, height: 512 },
     sameAs: CHANNELS.filter((c) => c.official).map((c) => c.href),
     parentOrganization: { ...schoolJsonLd(SITE_URL), "@context": undefined, "@id": SCHOOL_ID },
   };

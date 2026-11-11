@@ -275,6 +275,7 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
 
 export const config = {
   // every request goes through the gate (including /_next/static, /_next/image and prefetches); only the files crawlers
-  // need before anything else are left out
-  matcher: ["/((?!favicon.ico|robots.txt|sitemap.xml).*)"],
+  // and Google's favicon fetcher need before anything else are left out: no gate, cookie, 403 or redirect for them
+  // (favicon.ico, icon*.png, apple-icon*.png, manifest icons, manifest, robots.txt, sitemap.xml)
+  matcher: ["/((?!favicon\.ico|icon[^/]*\.png|apple-icon[^/]*\.png|brand/favicon-[^/]*\.png|manifest\.webmanifest|robots\.txt|sitemap\.xml).*)"],
 };
