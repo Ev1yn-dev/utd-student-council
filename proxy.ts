@@ -26,6 +26,10 @@ const NOINDEX = /^(?:\/(?:th|en))?\/(admin|pending-access|login|auth)(\/|$)|^\/a
 const PRIMARY_ONLY = /^(?:\/(?:th|en))?\/(login|admin|pending-access)(\/|$)|^\/auth(\/|$)/;
 // Not pages: route handlers and files keep their unprefixed paths.
 const NOT_PAGE = /^\/(api|auth|_hp)(\/|$)|\.[a-z0-9]+$/i;
+// The Google sign-in flow and the login page: the honeypot ban / 24 h auto-block never applies here, so a shared
+// CGNAT address that someone else tripped a trap on can still let a real student sign in. These are not trap paths and
+// never increment the trap counter (only TRAP_PATHS do); rate limits (authStart / authCallback) still apply.
+const AUTH_OPEN = /^(?:\/(?:th|en))?\/login(\/|$)|^\/auth(\/|$)/;
 const HOME = /^\/(th|en)\/?$/;
 const intl = createIntlMiddleware(routing);
 
@@ -130,8 +134,9 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
 
   if (!bypass) {
     // auto-blocked IPs (3+ trap hits in 10 min -> 24 h, public.ip_blocks via lib/trap.ts): the trap answer on every
-    // path. A verified search engine is never blocked (DNS check only runs for an IP that is on the list).
-    if ((await blockedUntil(ip)) !== null && (await verifySearchBot(ip, ua)) !== true) return decoy(req);
+    // path EXCEPT the sign-in flow (AUTH_OPEN), which must stay reachable on shared CGNAT addresses. A verified search
+    // engine is never blocked (DNS check only runs for an IP that is on the list).
+    if (!AUTH_OPEN.test(pathname) && (await blockedUntil(ip)) !== null && (await verifySearchBot(ip, ua)) !== true) return decoy(req);
     // scanner paths first (they also look like files): ban + record + refuse. A verified search engine only gets the
     // refusal: never banned, recorded or counted toward a block.
     if (TRAP_PATHS.test(pathname)) {
@@ -203,7 +208,9 @@ async function handle(req: NextRequest, host: "secondary" | null, bypass: boolea
   // 3) dynamic paths only: bans, search-bot check and rate limits (Redis / DNS). Public pages make no such call —
   //    they are cached; floods there are for Cloudflare. All skipped when the kill switch is on.
   if (dynamic && !bypass) {
-    if (await isBanned(ip)) return deny(403, "Forbidden");
+    // the honeypot ban never blocks the sign-in flow / login page (AUTH_OPEN) — a shared CGNAT address must still be
+    // able to sign in. Rate limits below still apply to /auth.
+    if (!AUTH_OPEN.test(pathname) && (await isBanned(ip))) return deny(403, "Forbidden");
     const searchBot = await verifySearchBot(ip, ua);
     if (searchBot === false && !isDev) {
       void logSecurity("fake_bot", { ip, path: pathname });
