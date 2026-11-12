@@ -67,9 +67,11 @@ type HeaderBag = { get(name: string): string | null };
 
 export type PathKind = "page" | "asset" | "api" | "open";
 
-/** What a path is, for the gate. "open" = never gated (sign-in callbacks, the gate and cron endpoints). */
+/** What a path is, for the gate. "open" = never gated (sign-in callbacks, the gate and cron endpoints, /.well-known). */
 export function pathKind(pathname: string): PathKind {
-  if (/^\/auth(\/|$)/.test(pathname) || pathname === "/api/gate" || pathname.startsWith("/api/cron/")) return "open";
+  // /.well-known/* (ACME TLS validation, Apple app-site-association, security.txt, etc.) must reach their handler or a
+  // clean 404 — never the decoy, even for the non-browser fetchers that request them.
+  if (/^\/auth(\/|$)/.test(pathname) || pathname === "/api/gate" || pathname.startsWith("/api/cron/") || /^\/\.well-known(\/|$)/.test(pathname)) return "open";
   if (pathname.startsWith("/api/")) return "api";
   if (pathname.startsWith("/_next/") || /\.[a-z0-9]{2,5}$/i.test(pathname)) return "asset";
   return "page";
