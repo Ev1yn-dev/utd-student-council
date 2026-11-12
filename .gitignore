@@ -73,3 +73,6 @@ roster*.json
 # raw Lighthouse reports (large; contain page config): summaries and timing tables are committed
 docs/lighthouse/*/*-mobile.json
 docs/lighthouse/*/*-desktop.json
+
+# pentest findings (local only)
+/docs/pentest/
