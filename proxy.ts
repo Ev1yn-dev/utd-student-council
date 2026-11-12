@@ -123,22 +123,29 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl;
   const ip = clientIp(req.headers);
   const ua = req.headers.get("user-agent") ?? "";
-  // auto-blocked IPs (3+ trap hits in 10 min -> 24 h, public.ip_blocks via lib/trap.ts): the trap answer on every path.
-  // A verified search engine is never blocked (DNS check only runs for an IP that is on the list).
-  if ((await blockedUntil(ip)) !== null && (await verifySearchBot(ip, ua)) !== true) return decoy(req);
-  // scanner paths first (they also look like files): ban + record + refuse. A verified search engine only gets the
-  // refusal: never banned, recorded or counted toward a block.
-  if (TRAP_PATHS.test(pathname)) {
-    if ((await verifySearchBot(ip, ua)) !== true) {
-      await ban(ip);
-      void logSecurity("trap", { ip, path: pathname });
-      event.waitUntil(
-        recordTrapHit({ ip, country: clientCountry(req.headers), ua, path: pathname }).then((until) =>
-          until ? logSecurity("ip_blocked", { ip, path: pathname, detail: { until: new Date(until).toISOString() } }) : undefined,
-        ),
-      );
+  // Kill switch: PROTECTION_MODE=off (or the owner's dev cookie) turns OFF every block below — the trap, the auto-block,
+  // the gate, UA filtering, bans and rate limits — so real browsers always get through. Set PROTECTION_MODE=off in the
+  // Vercel env and redeploy to open the site immediately. Session auth on /admin still applies (that is not a block).
+  const bypass = protectionMode() === "off" || validDevCookie(req.cookies.get(DEV_COOKIE)?.value);
+
+  if (!bypass) {
+    // auto-blocked IPs (3+ trap hits in 10 min -> 24 h, public.ip_blocks via lib/trap.ts): the trap answer on every
+    // path. A verified search engine is never blocked (DNS check only runs for an IP that is on the list).
+    if ((await blockedUntil(ip)) !== null && (await verifySearchBot(ip, ua)) !== true) return decoy(req);
+    // scanner paths first (they also look like files): ban + record + refuse. A verified search engine only gets the
+    // refusal: never banned, recorded or counted toward a block.
+    if (TRAP_PATHS.test(pathname)) {
+      if ((await verifySearchBot(ip, ua)) !== true) {
+        await ban(ip);
+        void logSecurity("trap", { ip, path: pathname });
+        event.waitUntil(
+          recordTrapHit({ ip, country: clientCountry(req.headers), ua, path: pathname }).then((until) =>
+            until ? logSecurity("ip_blocked", { ip, path: pathname, detail: { until: new Date(until).toISOString() } }) : undefined,
+          ),
+        );
+      }
+      return decoy(req);
     }
-    return decoy(req);
   }
 
   // the owner's bypass: ?dev=<DEV_BYPASS_SECRET> -> 1 h HttpOnly cookie, then the same URL without the secret
@@ -158,7 +165,6 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
     }
     return res;
   }
-  const bypass = protectionMode() === "off" || validDevCookie(req.cookies.get(DEV_COOKIE)?.value);
 
   // anti-code-fetching gate on every request. Search engines must pass a reverse + forward DNS check
   // (cached per IP); link-preview bots and health checks are recognised by User-Agent.
@@ -172,10 +178,10 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
     res.headers.set("cloudflare-cdn-cache-control", "no-store");
     return res;
   }
-  return handle(req, host);
+  return handle(req, host, bypass);
 }
 
-async function handle(req: NextRequest, host: "secondary" | null): Promise<NextResponse> {
+async function handle(req: NextRequest, host: "secondary" | null, bypass: boolean): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent") ?? "";
   // real visitor IP (Cloudflare sits in front of Vercel on utdsc.com) — see lib/client-ip.ts
@@ -184,19 +190,19 @@ async function handle(req: NextRequest, host: "secondary" | null): Promise<NextR
 
   // 1) honeypot / scanner paths: handled in proxy() before the gate
 
-  // 2) user agent policy (no network calls)
-  if (!ua.trim()) {
+  // 2) user agent policy (no network calls). Skipped entirely when the kill switch is on.
+  if (!bypass && !ua.trim()) {
     void logSecurity("ua_blocked", { ip, path: pathname, detail: { ua: "" } });
     return deny(403, "Forbidden");
   }
-  if (isAiCrawler(ua) || isBlockedTool(ua)) {
+  if (!bypass && (isAiCrawler(ua) || isBlockedTool(ua))) {
     void logSecurity("ua_blocked", { ip, path: pathname, detail: { ua: ua.slice(0, 80) } });
     return deny(403, "Forbidden");
   }
 
   // 3) dynamic paths only: bans, search-bot check and rate limits (Redis / DNS). Public pages make no such call —
-  //    they are cached; floods there are for Cloudflare.
-  if (dynamic) {
+  //    they are cached; floods there are for Cloudflare. All skipped when the kill switch is on.
+  if (dynamic && !bypass) {
     if (await isBanned(ip)) return deny(403, "Forbidden");
     const searchBot = await verifySearchBot(ip, ua);
     if (searchBot === false && !isDev) {
