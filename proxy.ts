@@ -1,17 +1,18 @@
 import createIntlMiddleware from "next-intl/middleware";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
 import { routing } from "@/i18n/routing";
 import {
   DEV_COOKIE, DEV_TTL_SEC, GATE_COOKIE, NO_PROTECT_HINT, botClass, decoyBody, gate, issueDevCookie, pathKind, protectionMode, validDevCookie, validDevSecret,
 } from "@/lib/browser-gate";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
-import { clientIp } from "@/lib/client-ip";
+import { clientCountry, clientIp } from "@/lib/client-ip";
 import { SUPABASE_URL, normalizeEmail, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
 import { RL_BYPASS_COOKIE, ipAllowlisted, issueBypass, noProtectHint, rlBypassCookie, verifyBypass } from "@/lib/rl-bypass";
 import { auditBypass, logSecurity } from "@/lib/security-log";
 import { SITE_HOST, SITE_URL } from "@/lib/site";
 import { refreshSession } from "@/lib/supabase/proxy";
+import { blockedUntil, recordTrapHit } from "@/lib/trap";
 
 const isDev = process.env.NODE_ENV === "development";
 const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
@@ -116,15 +117,27 @@ function hostRule(req: NextRequest): NextResponse | "secondary" | null {
   return NextResponse.redirect(`${SITE_URL}${pathname}`, 301);
 }
 
-export async function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest, event: NextFetchEvent) {
   const host = hostRule(req);
   if (host instanceof NextResponse) return host;
   const { pathname } = req.nextUrl;
   const ip = clientIp(req.headers);
-  // scanner paths first (they also look like files): ban + refuse
+  const ua = req.headers.get("user-agent") ?? "";
+  // auto-blocked IPs (3+ trap hits in 10 min -> 24 h, public.ip_blocks via lib/trap.ts): the trap answer on every path.
+  // A verified search engine is never blocked (DNS check only runs for an IP that is on the list).
+  if ((await blockedUntil(ip)) !== null && (await verifySearchBot(ip, ua)) !== true) return decoy(req);
+  // scanner paths first (they also look like files): ban + record + refuse. A verified search engine only gets the
+  // refusal: never banned, recorded or counted toward a block.
   if (TRAP_PATHS.test(pathname)) {
-    await ban(ip);
-    void logSecurity("trap", { ip, path: pathname });
+    if ((await verifySearchBot(ip, ua)) !== true) {
+      await ban(ip);
+      void logSecurity("trap", { ip, path: pathname });
+      event.waitUntil(
+        recordTrapHit({ ip, country: clientCountry(req.headers), ua, path: pathname }).then((until) =>
+          until ? logSecurity("ip_blocked", { ip, path: pathname, detail: { until: new Date(until).toISOString() } }) : undefined,
+        ),
+      );
+    }
     return decoy(req);
   }
 
@@ -149,7 +162,6 @@ export async function proxy(req: NextRequest) {
 
   // anti-code-fetching gate on every request. Search engines must pass a reverse + forward DNS check
   // (cached per IP); link-preview bots and health checks are recognised by User-Agent.
-  const ua = req.headers.get("user-agent") ?? "";
   const bot = botClass(ua);
   const botOk = bot === "ua" || (bot === "dns" && (isDev || (await verifySearchBot(ip, ua)) === true));
   if (gate(req.headers, req.method, pathname, req.cookies.get(GATE_COOKIE)?.value, botOk, bypass) === "decoy") return decoy(req);

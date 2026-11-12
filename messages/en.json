@@ -837,9 +837,24 @@
       "login": "Sign-in",
       "logout_all": "Signed out everywhere",
       "dev_bypass": "Owner bypass cookie issued (?dev=)",
-      "error": "Server error"
+      "error": "Server error",
+      "ip_blocked": "Auto-blocked IP (24 h)"
     },
-    "nav": "Security"
+    "nav": "Security",
+    "traps": {
+      "title": "Trap sources (30 days)",
+      "keep": "Kept 30 days, then deleted automatically",
+      "lead": "Requests to scanner-only paths (/.env, /.git, /wp-login.php ...). Only these are stored with the full IP. 3 or more hits in 10 minutes block the IP from the whole site for 24 hours. Verified search engines are never blocked. Hover an IP to see its user agent.",
+      "error": "Could not load the trap sources.",
+      "ip": "IP address",
+      "hits": "Hits",
+      "first": "First seen",
+      "last": "Last seen",
+      "country": "Country",
+      "network": "Network (ASN)",
+      "status": "Block",
+      "blockedUntil": "Blocked until {until}"
+    }
   },
   "errorPage": {
     "title": "Something went wrong",

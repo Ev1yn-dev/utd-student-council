@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 
 export type SecurityKind =
   | "trap" | "ua_blocked" | "fake_bot" | "rate_limited" | "unauth_write"
-  | "forbidden" | "upload_rejected" | "login" | "logout_all" | "error" | "dev_bypass";
+  | "forbidden" | "upload_rejected" | "login" | "logout_all" | "error" | "dev_bypass" | "ip_blocked";
 
 const recent = new Map<string, number>();
 

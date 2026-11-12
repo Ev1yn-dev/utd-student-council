@@ -81,5 +81,6 @@ export async function verifySearchBot(ip: string, ua: string): Promise<boolean |
   return ok;
 }
 
-/** Paths only scanners request (and our hidden honeypot). Hitting one bans the IP for an hour. */
+/** Paths only scanners request (and our hidden honeypot). One hit bans the IP from sign-in / back office for an hour;
+ * 3 in 10 minutes block it from the whole site for 24 h (lib/trap.ts). Verified search engines are exempt (proxy.ts). */
 export const TRAP_PATHS = /^\/(_hp\/|wp-admin|wp-login|wp-content|xmlrpc\.php|\.env|\.git|phpmyadmin|admin\.php|cgi-bin)/i;

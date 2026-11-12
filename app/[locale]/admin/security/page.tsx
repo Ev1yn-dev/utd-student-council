@@ -12,19 +12,50 @@ import { cn } from "@/lib/utils";
 type SP = { actor?: string; action?: string; from?: string; to?: string; page?: string };
 const daysAgo = (n: number) => new Date(Date.now() - n * 864e5).toISOString();
 type Event = { kind: string; path: string | null; ip_hash: string | null; created_at: string };
+type TrapHit = { ip: string; country: string | null; asn: number | null; as_org: string | null; ua: string | null; path: string | null; created_at: string };
+type TrapSource = { ip: string; hits: number; first: string; last: string; country: string | null; network: string | null; ua: string | null; paths: string[]; blockedUntil: string | null };
+
+/** Trap hits of the last 30 days (newest first) grouped by IP, with any active block. */
+function trapSources(hits: TrapHit[], blocks: { ip: string; expires_at: string }[]): TrapSource[] {
+  const until = new Map(blocks.map((b) => [b.ip, b.expires_at]));
+  const by = new Map<string, TrapSource>();
+  for (const h of hits) {
+    const s = by.get(h.ip);
+    if (s) {
+      s.hits++;
+      s.first = h.created_at;
+      if (h.path && !s.paths.includes(h.path) && s.paths.length < 8) s.paths.push(h.path);
+      continue;
+    }
+    by.set(h.ip, {
+      ip: h.ip, hits: 1, first: h.created_at, last: h.created_at, country: h.country, ua: h.ua, paths: h.path ? [h.path] : [],
+      network: h.asn ? `AS${h.asn}${h.as_org ? ` ${h.as_org}` : ""}` : h.as_org, blockedUntil: until.get(h.ip) ?? null,
+    });
+  }
+  return [...by.values()];
+}
 
 /** security.view: security events of the last 7 days, the admin audit log (filters: actor, action, date) and "sign out everywhere". */
 export default async function SecurityPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<SP> }) {
   const [{ locale }, sp] = await Promise.all([params, searchParams]);
   setRequestLocale(locale);
-  await requirePermission("security.view");
+  const session = await requirePermission("security.view");
+  // full IPs of trap hits: owner / admin role only (not an extra security.view grant)
+  const seesIps = session.role === "owner" || session.role === "admin";
   after(() => pruneAudit()); // keep one year
   const fl = auditFilters(sp);
-  const [t, ta, f, { data: ev }, log, facets] = await Promise.all([
+  const db = adminClient();
+  const [t, ta, f, { data: ev }, log, facets, traps] = await Promise.all([
     getTranslations("security"), getTranslations("admin.audit"), getFormatter(),
-    adminClient().from("security_events").select("kind,path,ip_hash,created_at").gte("created_at", daysAgo(7)).order("created_at", { ascending: false }).limit(500),
+    db.from("security_events").select("kind,path,ip_hash,created_at").gte("created_at", daysAgo(7)).order("created_at", { ascending: false }).limit(500),
     listAudit(fl).catch((e: Error) => (console.error("[admin] audit", e.message), null)),
     auditFacets().catch(() => ({ actors: [] as string[], actions: [] as string[], families: [] as string[] })),
+    seesIps
+      ? Promise.all([
+          db.from("trap_hits").select("ip,country,asn,as_org,ua,path,created_at").gte("created_at", daysAgo(30)).order("created_at", { ascending: false }).limit(5000),
+          db.from("ip_blocks").select("ip,expires_at").gt("expires_at", new Date().toISOString()),
+        ]).then(([h, b]) => (h.error || b.error ? null : trapSources((h.data ?? []) as TrapHit[], (b.data ?? []) as { ip: string; expires_at: string }[])))
+      : Promise.resolve(undefined),
   ]);
   const events = (ev ?? []) as Event[];
   const counts = Object.entries(events.reduce<Record<string, number>>((m, e) => ((m[e.kind] = (m[e.kind] ?? 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
@@ -54,6 +85,51 @@ export default async function SecurityPage({ params, searchParams }: { params: P
           <p className="text-sm text-muted">{t("none")}</p>
         )}
       </Card>
+
+      {traps !== undefined && (
+        <Card title={t("traps.title")} aside={t("traps.keep")}>
+          <p className="mb-3 text-sm text-muted">{t("traps.lead")}</p>
+          {traps === null ? (
+            <ErrorNote text={t("traps.error")} />
+          ) : traps.length === 0 ? (
+            <p className="rounded-xl bg-surface-2 px-4 py-8 text-center text-sm text-muted">{t("none")}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <caption className="sr-only">{t("traps.title")}</caption>
+                <thead className="text-xs text-muted">
+                  <tr>
+                    <th scope="col" className="py-2 pr-3 font-medium">{t("traps.ip")}</th>
+                    <th scope="col" className="pr-3 text-right font-medium">{t("traps.hits")}</th>
+                    <th scope="col" className="pr-3 font-medium">{t("traps.first")}</th>
+                    <th scope="col" className="pr-3 font-medium">{t("traps.last")}</th>
+                    <th scope="col" className="pr-3 font-medium">{t("traps.country")}</th>
+                    <th scope="col" className="pr-3 font-medium">{t("traps.network")}</th>
+                    <th scope="col" className="pr-3 font-medium">{t("path")}</th>
+                    <th scope="col" className="font-medium">{t("traps.status")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {traps.map((s) => (
+                    <tr key={s.ip} className="border-t border-line align-top">
+                      <td className="break-all py-2 pr-3 font-mono text-xs" title={s.ua ?? undefined}>{s.ip}</td>
+                      <td className="pr-3 text-right tabular-nums">{s.hits}</td>
+                      <td className="whitespace-nowrap pr-3 tabular-nums">{when(s.first)}</td>
+                      <td className="whitespace-nowrap pr-3 tabular-nums">{when(s.last)}</td>
+                      <td className="pr-3">{s.country ?? "—"}</td>
+                      <td className="max-w-[14rem] truncate pr-3 text-xs" title={s.network ?? undefined}>{s.network ?? "—"}</td>
+                      <td className="max-w-[14rem] truncate pr-3 font-mono text-xs" title={s.paths.join("\n")}>{s.paths.join(", ") || "—"}</td>
+                      <td className="whitespace-nowrap text-xs">
+                        {s.blockedUntil ? <span className="rounded-full bg-danger/10 px-2 py-0.5 text-danger">{t("traps.blockedUntil", { until: when(s.blockedUntil) })}</span> : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card title={ta("title")} aside={ta("keep")}>
         <form method="get" aria-label={ta("filters")} className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

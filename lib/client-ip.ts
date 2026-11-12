@@ -22,7 +22,7 @@ const v4 = (ip: string) => {
   return p.reduce((n, x) => n * 256 + Number(x), 0);
 };
 /** IPv6 as a 128-bit BigInt (handles "::" and an embedded IPv4 tail). */
-const v6 = (ip: string): bigint | null => {
+export const v6 = (ip: string): bigint | null => {
   if (!ip.includes(":") || !/^[0-9a-f:.]+$/i.test(ip)) return null;
   let s = ip.toLowerCase();
   const tail = s.match(/(\d+\.\d+\.\d+\.\d+)$/);
